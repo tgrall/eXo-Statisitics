@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<configuration>
+
+    <component>
+        <key>org.exoplatform.plugin.statistics.social.service.SocialStatisticService</key>
+        <type>org.exoplatform.plugin.statistics.social.service.impl.SocialStatisticServiceDefaultImpl</type>
+    </component>
+
+
+  <component>
+    <type>org.exoplatform.plugin.statistics.social.service.rest.SocialStatisticsResource</type>
+  </component> 
+  
+   
+
+    <!-- Configuration of the Weekly job for Social Activities -->
+    <external-component-plugins>
+        <target-component>org.exoplatform.services.scheduler.JobSchedulerService</target-component>
+        <component-plugin>
+            <name>SocialWeeklyStatisticJob</name>
+            <set-method>addPeriodJob</set-method>
+            <type>org.exoplatform.services.scheduler.PeriodJob</type>
+            <description>add a Social Activities Weekly job to the JobSchedulerService</description>
+            <init-params>
+                <properties-param>
+                    <name>job.info</name>
+                    <description>Save the Social Activities Weekly Statistic data periodically</description>
+                    <property name="jobName" value="periodically"/>
+                    <property name="groupName" value="SocialWeeklyStatisticJob"/>
+                    <property name="job" value="org.exoplatform.plugin.statistics.social.service.job.SocialWeeklyStatisticJob"/>
+                    <property name="repeatCount" value="0"/>
+                    <property name="period" value="30000"/>    
+                    <property name="startTime" value="+0"/>
+                    <property name="endTime" value=""/>               
+                </properties-param>
+            </init-params>
+        </component-plugin>
+    </external-component-plugins>
+
+    <!-- Configuration of the Monthly job for Social Activities -->
+    <external-component-plugins>
+        <target-component>org.exoplatform.services.scheduler.JobSchedulerService</target-component>
+        <component-plugin>
+            <name>SocialMonthlyStatisticJob</name>
+            <set-method>addPeriodJob</set-method>
+            <type>org.exoplatform.services.scheduler.PeriodJob</type>
+            <description>add a Social Activities Monthly job to the JobSchedulerService</description>
+            <init-params>
+                <properties-param>
+                    <name>job.info</name>
+                    <description>Save the Social Activities Monthly Statistic data periodically</description>
+                    <property name="jobName" value="periodically"/>
+                    <property name="groupName" value="SocialMonthlyStatisticJob"/>
+                    <property name="job" value="org.exoplatform.plugin.statistics.social.service.job.SocialMonthlyStatisticJob"/>
+                    <property name="repeatCount" value="0"/>
+                    <property name="period" value="45000"/>    
+                    <property name="startTime" value="+0"/>
+                    <property name="endTime" value=""/>               
+                </properties-param>
+            </init-params>
+        </component-plugin>
+    </external-component-plugins>
+
+
+ 
+
+
+    <external-component-plugins>
+        <target-component>org.exoplatform.commons.chromattic.ChromatticManager</target-component>
+        <component-plugin>
+            <name>chromattic</name>
+            <set-method>addLifeCycle</set-method>
+            <type>org.exoplatform.commons.chromattic.ChromatticLifeCycle</type>
+            <init-params>
+                <value-param>
+                    <name>domain-name</name>
+                    <value>social-statistics</value>
+                </value-param>
+                <value-param>
+                    <name>workspace-name</name>
+                    <value>social</value>
+                </value-param>
+                <values-param>
+                    <name>entities</name>
+                    <value>org.exoplatform.plugin.statistics.social.service.model.SocialStatistic</value>
+                    <value>org.exoplatform.plugin.statistics.social.service.model.ActivityStatsWeekly</value>
+                </values-param>
+                <properties-param>
+                    <name>options</name>
+                    <property name="org.chromattic.api.Option.root_node.path" value="/exo:applications/Social_Statistics"/>
+                    <property name="org.chromattic.api.Option.root_node.create" value="true"/>
+                </properties-param>
+            </init-params>
+        </component-plugin>
+    </external-component-plugins>
+
+
+
+
+
+
+
+</configuration>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.exoplatform.plugins</groupId>
+    <artifactId>statistics.social.parent</artifactId>
+    <version>0.1.0</version>
+  </parent>
+  <artifactId>exo.platform.plugins.statistics.social.component</artifactId>
+  <packaging>jar</packaging>
+  <name>Statistics Social - Services</name>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <dependencies>
+  
+    <dependency>
+      <groupId>org.exoplatform.portal</groupId>
+      <artifactId>exo.portal.webui.portal</artifactId>
+      <version>${org.exoplatform.portal.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.exoplatform.kernel</groupId>
+      <artifactId>exo.kernel.container</artifactId>
+      <version>${org.exoplatform.kernel.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.exoplatform.jcr</groupId>
+      <artifactId>exo.jcr.framework.command</artifactId>
+      <version>${org.exoplatform.jcr.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.exoplatform.ws</groupId>
+      <artifactId>exo.ws.rest.core</artifactId>
+      <version>${org.exoplatform.ws.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.exoplatform.ks</groupId>
+      <artifactId>exo.ks.eXoApplication.forum.service</artifactId>
+      <version>${org.exoplatform.ks.version}</version>
+      <scope>provided</scope>
+    </dependency>
+        	
+     <dependency>
+      <groupId>org.exoplatform.ecms</groupId>
+      <artifactId>exo-ecms-core-services</artifactId>
+      <version>${org.exoplatform.ecms.version}</version>
+    </dependency>
+    
+     <dependency>
+        <groupId>org.exoplatform.social</groupId>
+        <artifactId>exo.social.component.core</artifactId>
+        <version>${org.exoplatform.social.version}</version>
+      </dependency>
+
+    <dependency>
+        <groupId>org.exoplatform.social</groupId>
+        <artifactId>exo.social.component.service</artifactId>
+        <version>${org.exoplatform.social.version}</version>
+      </dependency>
+
+     <dependency>
+        <groupId>org.exoplatform.social</groupId>
+        <artifactId>exo.social.extras.document-composer-plugin</artifactId>
+        <version>${org.exoplatform.social.version}</version>
+      </dependency>
+      
+      
+    <dependency>
+      <groupId>org.chromattic</groupId>
+      <artifactId>chromattic.core</artifactId>
+      <version>${org.chromattic.version}</version>
+      <type>jar</type>
+    </dependency>      
+      
+    <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>${org.json.version}</version>
+      </dependency>    	  
+  </dependencies>
+
+</project>

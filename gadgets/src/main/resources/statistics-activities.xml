@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+  <ModulePrefs title="Statistics: Activities" description="This gadget show statistics about activities" >
+    <Require feature="dynamic-height"/>
+    <Locale messages="locale/default.xml" />    
+  </ModulePrefs>
+  <Content type="html">
+    <![CDATA[ 
+    <!-- google
+    <link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/ui-lightness/jquery-ui.css" />
+    <script language="javascript" type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.0/jquery.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.min.js"></script>
+    -->
+    
+    <link type="text/css" rel="stylesheet" href="/jquery/jquery-ui/css/ui-lightness/jquery-ui-1.8.12.custom.css" />
+    <script language="javascript" type="text/javascript" src="/jquery/jquery-ui/js/jquery-1.5.1.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/jquery/jquery-ui/js/jquery-ui-1.8.12.custom.min.js"></script>   
+    
+    <script type="text/javascript">
+      var restServiceUrl = "/rest/social-statistics/activities/";
+      var monthlyStatUrl = restServiceUrl + "monthly/";
+      var weeklyStatUrl = restServiceUrl + "weekly/";
+      
+      
+      /********** Utils **********/
+      function addZeros(number, length) {        
+        var str = '' + number;
+        while (str.length < length) {
+          str = '0' + str;
+        }
+        return str;     
+      }
+      /********** /Utils **********/
+      
+      function init() {
+        $("#accordion").accordion({
+          autoHeight: false,
+          navigation: true
+        });   
+        loadData();
+      }
+      
+      $(function() { 
+        $("#accordion").accordion({ 
+          change: function(event, ui) { 
+            resizeGadget(ui.newContent.height())
+          } 
+        }); 
+      }) 
+        
+        
+        function loadData() {
+        loadTotalData();
+      loadMonthlyData();
+      loadWeeklyData();
+      }
+        
+        
+        function resizeGadget(contentSize) {
+        if (contentSize == null ){
+            contentSize = 0;
+        }
+        var totalHeight = $("#localGadgetContainer").height() + contentSize;
+      gadgets.window.adjustHeight(totalHeight);
+      }     
+        
+        
+        function loadTotalData() {
+        $.getJSON(restServiceUrl, loadTotalStats);
+      }
+        
+        function loadTotalStats(response) {
+        console.log("loadTotalStats");
+      var resultData = response.data;
+      var html = new Array();
+      for (var i = 0; i < resultData.length; i++)
+      {
+        var item = resultData[i];
+        var startDate = new Date(item.startDate.time);
+        var fromDate = startDate.getFullYear() +"/"+ addZeros(startDate.getMonth()+1,2) +"/"+ addZeros(startDate.getDate(),2);
+        var endDate = new Date(item.endDate.time);
+        var toDate = endDate.getFullYear() +"/"+ addZeros(endDate.getMonth()+1,2) +"/"+ addZeros(endDate.getDate(),2)
+            var value = item.value;
+        
+        html.push('<div class="IconLink">__MSG_from__ '+ fromDate +' __MSG_to__ '+ toDate +' : ' + item.value  +' __MSG_entries__ </i></div>');
+      }    
+      
+      html.push('__MSG_total_actitivies_message__');    
+      document.getElementById('loadTotalStats').innerHTML = html.join('');
+      resizeGadget();
+      }     
+        
+        
+        function loadMonthlyData() {
+        $.getJSON(monthlyStatUrl, loadMonltyStats);
+      }
+        
+        function loadMonltyStats(response) {
+        console.log("loadMonltyStats");
+      var resultData = response.data;
+      var html = new Array();
+      for (var i = 0; i < resultData.length; i++)
+      {
+        var item = resultData[i];
+        var startDate = new Date(item.startDate.time);
+        var endDate = new Date(item.endDate.time);
+        var monthNameAsString = startDate.getFullYear() + '-' + addZeros(endDate.getMonth()+1,2);
+        var value = item.value;
+        
+        html.push('<div class="IconLink">'+ monthNameAsString +' : ' + item.value  +' entries</i></div>');
+      }        
+      document.getElementById('monthlyStatistic').innerHTML = html.join('');
+      resizeGadget();
+      }
+        
+        
+        function loadWeeklyData() {
+        $.getJSON(weeklyStatUrl, loadWeeklyStats);
+      
+      } 
+        
+        function loadWeeklyStats(response) {
+        var resultData = response.data;
+      var html = new Array();
+      for (var i = 0; i < resultData.length; i++)
+      {
+        var item = resultData[i];
+        var startDate = new Date(item.startDate.time);
+        var startDateString = startDate.getFullYear() +"/"+ addZeros(startDate.getMonth()+1,2) +"/"+ addZeros(startDate.getDate(),2);            
+        var endDate = new Date(item.endDate.time);
+        var endDateString = endDate.getFullYear() +"/"+ addZeros(endDate.getMonth()+1,2) +"/"+ addZeros(endDate.getDate(),2);
+        var value = item.value;
+        
+        html.push('<div class="IconLink">'+ startDateString +' - '+ endDateString + ' : ' + item.value  +' entries</i></div>');
+      }        
+      document.getElementById('weeklyStatistic').innerHTML = html.join('');
+      resizeGadget();
+      }      
+        
+        
+        gadgets.util.registerOnLoadHandler(init);
+      
+    </script>
+    
+    <div id="localGadgetContainer">        
+      <h1>eXo Social Activities</h1>
+      
+      <div id="accordion" style="margin-top:2px"> 
+        
+        
+        <h3><a href="#">Social Activities</a></h3>
+        <div id="loadTotalStats">
+          Loading....
+        </div>      
+        
+        <h3><a href="#">Activities by Weeks</a></h3> 
+        <div id="weeklyStatistic"> 
+          Loading....
+        </div>
+        
+        
+        <h3><a href="#">Activities by Month</a></h3>
+        <div id="monthlyStatistic">
+          Loading....
+        </div>
+        
+      </div>  
+    </div>
+    
+    
+    ]]></Content></Module>

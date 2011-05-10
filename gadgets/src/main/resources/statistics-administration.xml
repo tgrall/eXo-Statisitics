@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+  <ModulePrefs title="eXo Social Statistic Administration" description="eXo Social Statistic Administration" >
+    <Require feature="dynamic-height"/>
+    <Locale messages="locale/default.xml" />    
+  </ModulePrefs>
+  <Content type="html">
+    <![CDATA[  
+    <!-- google
+    <link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/ui-lightness/jquery-ui.css" />
+    <script language="javascript" type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.0/jquery.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.min.js"></script>
+    -->
+    
+    <link type="text/css" rel="stylesheet" href="/jquery/jquery-ui/css/ui-lightness/jquery-ui-1.8.12.custom.css" />
+    <script language="javascript" type="text/javascript" src="/jquery/jquery-ui/js/jquery-1.5.1.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/jquery/jquery-ui/js/jquery-ui-1.8.12.custom.min.js"></script>
+    
+    
+    
+    
+    <script type="text/javascript">
+      var restServiceUrl = "/rest/social-statistics/activities/";
+      var monthlyStatValidationUrl = restServiceUrl + "monthly/validate";
+      var weeklyStatValidationUrl = restServiceUrl + "weekly/validate";     
+      var updateWeeklyStat = restServiceUrl + "weekly/";
+      var updateMonthlyStat = restServiceUrl + "monthly/";
+      var numberOfLines = 5;
+      
+      /********** Utils **********/
+      function addZeros(number, length) {        
+        var str = '' + number;
+        while (str.length < length) {
+          str = '0' + str;
+        }
+        return str;     
+      }
+      /********** /Utils **********/
+      
+      function init() {
+        
+        document.getElementById('monthlyStatistic').innerHTML = '__MSG_loading__...';
+        document.getElementById('weeklyStatistic').innerHTML = '__MSG_loading__...';
+        
+        loadWeeklyValidationStat(numberOfLines);
+        loadMonthlyValidationStat(numberOfLines);
+        
+        $("#accordion").accordion({
+          autoHeight: false,
+          navigation: true
+        });   
+        
+      }
+      
+      function addMoreStats() {
+        numberOfLines = numberOfLines + 5;
+        init();
+      }
+      function  resetGadget() {
+        numberOfLines = 5;
+        init();
+      }
+      
+      
+      function resizeGadget() {
+        var totalHeight = $("#localGadgetContainer").height() +50;
+        gadgets.window.adjustHeight(totalHeight);
+      }      
+      
+      function updateStatistics(statType, yearToLoad, idToLoad) {
+        var waitingText = '__MSG_loading__ ....'
+            var elName = statType +'-'+ yearToLoad +'-'+ idToLoad;
+        var urlToCall = null;
+        if (statType == "WEEK") {
+          urlToCall = updateWeeklyStat;
+          document.getElementById('ACTION-'+ elName ).innerHTML = waitingText;
+        }else {
+          urlToCall=  updateMonthlyStat;
+          document.getElementById('ACTION-'+ elName ).innerHTML = waitingText;
+        }    
+        $.post(urlToCall + yearToLoad +"/"+ idToLoad , updateStatisticInfo);        
+      }
+      
+      function updateStatisticInfo( response) {
+        var item = response.data[0];
+        
+        console.log("Call stat : "+ item ) ;
+        
+        var html = new Array();
+        html.push('   '+ item.year +'/'+ addZeros(item.id,2) +' : ' + item.value  +' entries');
+        html.push('  <a href="javascript:updateStatistics('+item.year+','+ item.id +')" >Refresh</a>  ');
+        document.getElementById(item.type +'-'+ item.year +'-'+ item.id).innerHTML = html.join('');
+        resizeGadget();
+      }
+      
+      
+      function loadWeeklyValidationStat(numberOfWeeks) {
+        console.log("loadWeeklyValidationStat "+ numberOfWeeks );
+        $.getJSON(weeklyStatValidationUrl +"?nb="+numberOfWeeks, printWeeklyValidationStat);
+      }
+      
+      function printWeeklyValidationStat(response) {
+        var resultData = response.data;
+        console.log(resultData);
+        var html = new Array();
+        for (var i = 0; i < resultData.length; i++)
+        {
+          var item = resultData[i];
+          var value = item.value;
+          
+          html.push('<div class="IconLink" id="'+ item.type +'-'+ item.year +'-'+ item.id +'" >');
+          html.push('   '+ item.year +'/'+ addZeros(item.id,2) +' : ' + item.value  +' entries');
+          html.push('  <a href="javascript:updateStatistics(\''+ item.type +'\','+item.year+','+ item.id +')" >Refresh</a>  ');
+          html.push('</div>');
+        }        
+        document.getElementById('weeklyStatistic').innerHTML = html.join('');
+        resizeGadget();
+      }         
+      
+      
+      
+      function loadMonthlyValidationStat(numberOfMonths) {
+        console.log("loadWeeklyValidationStat "+ numberOfMonths );
+        $.getJSON(monthlyStatValidationUrl +"?nb="+numberOfMonths, printMonthlyValidationStat);
+      }
+      
+      
+      function printMonthlyValidationStat(response) {
+        var resultData = response.data;
+        console.log(resultData);
+        var html = new Array();
+        for (var i = 0; i < resultData.length; i++)
+        {
+          var item = resultData[i];
+          var elName = item.type +'-'+ item.year +'-'+ item.id;
+          html.push('<div class="IconLink"  id="'+ elName  +'" >');
+          html.push('  <div style="float:left; margin-right:10px; ">'+ item.year +'/'+ addZeros(item.id,2) +' : ' + item.value  +' entries </div>');
+          html.push('  <div style="float:auto;  " id="ACTION-'+ elName +'" > <a href="javascript:updateStatistics(\''+ item.type  +'\','+item.year+','+ item.id +')" >Refresh</a></div>  ');
+          html.push('</div>');
+        }        
+        document.getElementById('monthlyStatistic').innerHTML = html.join('');
+        resizeGadget();
+        
+      }       
+      
+      gadgets.util.registerOnLoadHandler(init);
+      
+    </script>
+    <style>
+      statContainer {
+        height: 800px;
+      }
+    </style>
+    
+    
+    <div id="localGadgetContainer">    
+      <h1>Statistic Validation</h1>
+      
+      <div id="accordion" style="margin-top:2px">
+        
+        
+        <h3><a href="#">Activities by Weeks</a></h3>
+        <div id="weeklyStatisticContainer">
+          <div id="weeklyStatistic">
+            Loading....
+          </div>
+        </div>
+        
+        <h3 id="title2"><a href="#">Activities by Month</a></h3>
+        <div id="monthlyStatisticContainer" >
+          <div id="monthlyStatistic" >
+            Loading....
+          </div>
+          More
+        </div>
+        
+      </div>  
+      
+      
+      
+      <a href="javascript:init()">Refresh All</a>  |
+      <a href="javascript:addMoreStats()">More</a> |
+      <a href="javascript:resetGadget()">Reset</a>     
+    </div>
+    
+    ]]></Content></Module>
