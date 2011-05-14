@@ -5,16 +5,12 @@
 package org.exoplatform.plugin.statistics.social.service.impl;
 
 import java.util.ArrayList;
-import javax.jcr.RepositoryException;
-import org.exoplatform.container.xml.InitParams;
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
-
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import javax.jcr.Node;
+
 import javax.jcr.NodeIterator;
+import javax.jcr.RepositoryException;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
@@ -22,14 +18,14 @@ import javax.jcr.query.QueryResult;
 import org.chromattic.api.ChromatticSession;
 import org.exoplatform.commons.chromattic.ChromatticLifeCycle;
 import org.exoplatform.commons.chromattic.ChromatticManager;
-
-
+import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.plugin.statistics.social.service.SocialStatisticService;
 import org.exoplatform.plugin.statistics.social.service.dao.StatisticItemDAO;
 import org.exoplatform.plugin.statistics.social.service.model.ActivityStatsWeekly;
 import org.exoplatform.plugin.statistics.social.service.model.SocialStatistic;
 import org.exoplatform.plugin.statistics.social.service.model.StatisticInterval;
-
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 import org.picocontainer.Startable;
 
 /**
@@ -75,33 +71,25 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
 
 
         long startTime = System.currentTimeMillis();
-        List<StatisticItemDAO> results = new ArrayList();
         log.info("==== Start Total Activities Stats  ");
         try {
             ChromatticSession session = lifeCycle.getChromattic().openSession();
 
-            // do not know how to control the order by with the
-            // Chromattic query builder so I use the standard QueryManager
-            String countActivitiesQuery = "select * from exo:statisticItem where "
-                    + "jcr:path like '/exo:applications/Social_Statistics/" + parentFolder + "/%' "
-                    + "order by startDate asc ";
-            QueryManager qm = session.getJCRSession().getWorkspace().getQueryManager();
-            Query queryJCR = qm.createQuery(countActivitiesQuery, Query.SQL);
-            QueryResult result = queryJCR.execute();
-            NodeIterator nodeIterator = result.getNodes();
-            while (nodeIterator.hasNext()) {
-                Node statItem = nodeIterator.nextNode();
 
-                // store the first date as the start of the stat
-                // so only the first one
+            org.chromattic.api.query.QueryResult<SocialStatistic> queryResults =  session.createQueryBuilder(SocialStatistic.class)
+            .where("jcr:path like '/exo:applications/Social_Statistics/" + parentFolder + "/%' ")
+            .orderBy("startDate asc").get().objects();
+           
+            while(queryResults.hasNext()) {
+            	SocialStatistic statItem = queryResults.next();
                 if (statisticItemDAO.getStartDate() == null) {
-                    statisticItemDAO.setStartDate(statItem.getProperty("startDate").getDate().getTime());
+                    statisticItemDAO.setStartDate(statItem.getStartDate());
                 }
 
-                statisticItemDAO.setEndDate(statItem.getProperty("startDate").getDate().getTime());
-                numberOfItems = numberOfItems + statItem.getProperty("value").getLong();
+                statisticItemDAO.setEndDate(statItem.getStartDate());
+                numberOfItems = numberOfItems + statItem.getValue();
                 statisticItemDAO.setValue(numberOfItems);
-
+            	
             }
 
 
@@ -122,35 +110,32 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
 
 
         long startTime = System.currentTimeMillis();
-        List<StatisticItemDAO> results = new ArrayList();
+        List<StatisticItemDAO> results = new ArrayList<StatisticItemDAO>();
         log.info("==== Start Return Weekly Stats  ");
         try {
             ChromatticSession session = lifeCycle.getChromattic().openSession();
 
-            // do not know how to control the order by with the
-            // Chromattic query builder so I use the standard QueryManager
-            String countActivitiesQuery = "select * from exo:statisticItem where "
-                    + "jcr:path like '/exo:applications/Social_Statistics/" + parentFolder + "/%' "
-                    + "order by startDate desc ";
-            QueryManager qm = session.getJCRSession().getWorkspace().getQueryManager();
-            Query queryJCR = qm.createQuery(countActivitiesQuery, Query.SQL);
-            QueryResult result = queryJCR.execute();
-            NodeIterator nodeIterator = result.getNodes();
-            while (nodeIterator.hasNext()) {
-                Node statItem = nodeIterator.nextNode();
+            
+            org.chromattic.api.query.QueryResult<SocialStatistic> queryResults =  session.createQueryBuilder(SocialStatistic.class)
+            .where("jcr:path like '/exo:applications/Social_Statistics/" + parentFolder + "/%' ")
+            .orderBy("startDate desc").get().objects();
+           
+            while(queryResults.hasNext()) {
+            	SocialStatistic statItem = queryResults.next();
                 StatisticItemDAO itemDAO = new StatisticItemDAO();
                 itemDAO.setType(typeLabel);
 
 
-                itemDAO.setId(statItem.getProperty("idInYear").getLong());
-                itemDAO.setYear(statItem.getProperty("year").getLong());
-                itemDAO.setStartDate(statItem.getProperty("startDate").getDate().getTime());
-                itemDAO.setEndDate(statItem.getProperty("endDate").getDate().getTime());
-                itemDAO.setValue(statItem.getProperty("value").getLong());
+                itemDAO.setId(statItem.getIdInYear());
+                itemDAO.setYear(statItem.getYear());
+                itemDAO.setStartDate(statItem.getStartDate());
+                itemDAO.setEndDate(statItem.getEndDate());
+                itemDAO.setValue(statItem.getValue());
 
                 results.add(itemDAO);
             }
-
+            
+  
 
         } catch (Exception e) {
             log.error(e);
