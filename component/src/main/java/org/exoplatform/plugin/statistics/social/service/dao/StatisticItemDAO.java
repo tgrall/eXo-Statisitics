@@ -34,7 +34,8 @@ public class StatisticItemDAO {
     private long id;
     private String type;
     private long value;
-    
+    private long elapsedTime;
+    private Date executionDate;
 
     public long getEndDateTimeStamp() {
         return endDateTimeStamp;
@@ -100,6 +101,22 @@ public class StatisticItemDAO {
     public void setYear(long year) {
         this.year = year;
     }
+
+    public long getElapsedTime() {
+        return elapsedTime;
+    }
+
+    public void setElapsedTime(long elapsedTime) {
+        this.elapsedTime = elapsedTime;
+    }
+
+    public Date getExecutionDate() {
+        return executionDate;
+    }
+
+    public void setExecutionDate(Date executionDate) {
+        this.executionDate = executionDate;
+    }
     
     
     public String toString() {
@@ -110,6 +127,8 @@ public class StatisticItemDAO {
         buff.append("[value : ").append(this.getValue()).append("]");
         buff.append("[year : ").append(this.getYear()).append("]");
         buff.append("[id : ").append(this.getId()).append("]");
+        buff.append("[Elasped Time : ").append(this.getElapsedTime()).append("]");
+        buff.append("[Exec Date : ").append(this.getExecutionDate()).append("]");
         
         return buff.toString();
     }

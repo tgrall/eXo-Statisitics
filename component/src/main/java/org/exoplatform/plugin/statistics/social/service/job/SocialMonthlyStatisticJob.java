@@ -4,15 +4,11 @@
  */
 package org.exoplatform.plugin.statistics.social.service.job;
 
-import org.exoplatform.container.ExoContainer;
-import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
-import org.exoplatform.plugin.statistics.social.service.SocialStatisticService;
 
 /**
  *
@@ -24,11 +20,8 @@ public class SocialMonthlyStatisticJob extends SocialStatisticJob {
 
     @Override
     public void execute(JobExecutionContext jec) throws JobExecutionException {
+      log.info("---- Monthly Job ---- ");
       this.getStatisticService().calculateMonthlyStatistics();
     }
-
-
-    
-
     
 }

@@ -38,20 +38,20 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
     // these should also be exposed as REST
     //TODO : review logging and support debug/info to trace data
     private static final Log log = ExoLogger.getLogger(SocialStatisticServiceDefaultImpl.class);
-    private final ChromatticManager manager;
-    /** . */
+
     private final ChromatticLifeCycle lifeCycle;
 
     public SocialStatisticServiceDefaultImpl(InitParams params, ChromatticManager manager) throws Exception {
         ChromatticLifeCycle lifeCycle = manager.getLifeCycle("social-statistics");
-        this.manager = manager;
         this.lifeCycle = lifeCycle;
 
     }
 
+    @Override
     public void start() {
     }
 
+    @Override
     public void stop() {
     }
 
@@ -63,9 +63,10 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
      * 
      * @return the total number of activities based on the weekly stats. 
      */
+    @Override
     public StatisticItemDAO getTotalActivities() {
         StatisticItemDAO statisticItemDAO = new StatisticItemDAO();
-
+        
         long numberOfItems = 0;
         String parentFolder = PARENT_FOLDER_WEEKLY_STATS;
 
@@ -74,22 +75,23 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
         log.info("==== Start Total Activities Stats  ");
         try {
             ChromatticSession session = lifeCycle.getChromattic().openSession();
-
-
             org.chromattic.api.query.QueryResult<SocialStatistic> queryResults =  session.createQueryBuilder(SocialStatistic.class)
             .where("jcr:path like '/exo:applications/Social_Statistics/" + parentFolder + "/%' ")
             .orderBy("startDate asc").get().objects();
            
             while(queryResults.hasNext()) {
             	SocialStatistic statItem = queryResults.next();
+            	// store the first date as the start of the stat
+                // so only the first one
                 if (statisticItemDAO.getStartDate() == null) {
                     statisticItemDAO.setStartDate(statItem.getStartDate());
-                }
+                }           
 
-                statisticItemDAO.setEndDate(statItem.getStartDate());
+                statisticItemDAO.setEndDate(statItem.getEndDate());
                 numberOfItems = numberOfItems + statItem.getValue();
                 statisticItemDAO.setValue(numberOfItems);
-            	
+                statisticItemDAO.setElapsedTime( System.currentTimeMillis() - startTime );
+                statisticItemDAO.setExecutionDate( new Date() );                
             }
 
 
@@ -102,11 +104,76 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
         return statisticItemDAO;
 
     }
+    
+    
+    
+    public List getStatistics(int type, int page, int pageSize) {        
+        String parentFolder = "";
+        String typeLabel = "";
+        if ( type == StatisticInterval.TYPE_MONTH ) {
+            parentFolder = PARENT_FOLDER_MONTHLY_STATS;
+            typeLabel = StatisticInterval.TYPE_MONTH_TEXT;
+        } else if ( type == StatisticInterval.TYPE_WEEK ) { 
+            parentFolder = PARENT_FOLDER_WEEKLY_STATS; 
+            typeLabel = StatisticInterval.TYPE_WEEK_TEXT;
+        } else if ( type == StatisticInterval.TYPE_DAY ) {
+            parentFolder = PARENT_FOLDER_DAILY_STATS;
+            typeLabel = StatisticInterval.TYPE_DAY_TEXT;
+        } 
+
+
+        long startTime = System.currentTimeMillis();
+        List<StatisticItemDAO> results = new ArrayList<StatisticItemDAO>();
+        log.info("==== Start Return Stats  ");
+        try {
+        	
+            // the first query page is 0, so we should remove 1
+            long offSet = (page-1)*pageSize;     	
+            ChromatticSession session = lifeCycle.getChromattic().openSession();
+            org.chromattic.api.query.QueryResult<SocialStatistic> queryResults =  session.createQueryBuilder(SocialStatistic.class)
+            .where("jcr:path like '/exo:applications/Social_Statistics/" + parentFolder + "/%' ")
+            .orderBy("startDate asc").get().objects(offSet, pageSize +0L);
+            
+            while(queryResults.hasNext()) {
+            	SocialStatistic statItem = queryResults.next();
+                StatisticItemDAO itemDAO = new StatisticItemDAO();
+                itemDAO.setType(typeLabel);
+                itemDAO.setId(statItem.getIdInYear());
+                itemDAO.setYear(statItem.getYear());
+                itemDAO.setStartDate(statItem.getStartDate());
+                itemDAO.setEndDate(statItem.getEndDate());
+                itemDAO.setValue(statItem.getValue());
+                results.add(itemDAO);
+            }
+
+            
+
+        } catch (Exception e) {
+            log.error(e);
+        } finally {
+        }
+        log.info("==== End Start Return Stats (" + (System.currentTimeMillis() - startTime) + "ms)");
+
+        return results;
+
+    }
+    
+    
 
     public List getStatistics(int type) {
 
-        String typeLabel = (StatisticInterval.TYPE_WEEK == type) ? "WEEK" : "MONTH";
-        String parentFolder = (StatisticInterval.TYPE_MONTH == type) ? PARENT_FOLDER_MONTHLY_STATS : PARENT_FOLDER_WEEKLY_STATS;
+        String parentFolder = "";
+        String typeLabel = "";
+        if ( type == StatisticInterval.TYPE_MONTH ) {
+            parentFolder = PARENT_FOLDER_MONTHLY_STATS;
+            typeLabel = StatisticInterval.TYPE_MONTH_TEXT;
+        } else if ( type == StatisticInterval.TYPE_WEEK ) { 
+            parentFolder = PARENT_FOLDER_WEEKLY_STATS; 
+            typeLabel = StatisticInterval.TYPE_WEEK_TEXT;
+        } else if ( type == StatisticInterval.TYPE_DAY ) {
+            parentFolder = PARENT_FOLDER_DAILY_STATS;
+            typeLabel = StatisticInterval.TYPE_DAY_TEXT;
+        } 
 
 
         long startTime = System.currentTimeMillis();
@@ -124,14 +191,11 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
             	SocialStatistic statItem = queryResults.next();
                 StatisticItemDAO itemDAO = new StatisticItemDAO();
                 itemDAO.setType(typeLabel);
-
-
                 itemDAO.setId(statItem.getIdInYear());
                 itemDAO.setYear(statItem.getYear());
                 itemDAO.setStartDate(statItem.getStartDate());
                 itemDAO.setEndDate(statItem.getEndDate());
                 itemDAO.setValue(statItem.getValue());
-
                 results.add(itemDAO);
             }
             
@@ -141,7 +205,7 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
             log.error(e);
         } finally {
         }
-        log.info("==== End Start Return Weekly Stats (" + (System.currentTimeMillis() - startTime) + "ms)");
+        log.info("==== End Start Return Stats (" + (System.currentTimeMillis() - startTime) + "ms)");
 
         return results;
 
@@ -155,6 +219,53 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
         return getStatistics(StatisticInterval.TYPE_MONTH);
     }
 
+    // TODO : check multi threading
+    public long calculateDailyStatistics() {
+        long numberOfItems = -1;
+        long startTime = System.currentTimeMillis();
+        log.info("==== Start of the Daily stats calculation ");
+        try {
+            ChromatticSession session = lifeCycle.getChromattic().openSession();
+            // Aggregate last week data
+            Calendar cal = Calendar.getInstance();
+            SocialStatistic statItem = this.setDayStat(session, cal.get(Calendar.YEAR), cal.get(Calendar.DAY_OF_YEAR), false);
+            session.save();
+
+        } catch (Exception e) {
+            log.error(e);
+        } finally {
+            
+        }
+        log.info("==== End of the Daily stats calculation (" + (System.currentTimeMillis() - startTime) + "ms)");
+        return numberOfItems;
+    }    
+    
+    
+
+    public List calculateDailyStatistics(int year, int day) {
+        List<StatisticItemDAO> results = new ArrayList();
+        long numberOfItems = -1;
+        long startTime = System.currentTimeMillis();
+        log.info("==== Start of the Daily stats calculation (Manual Call : " + year + "-" + day + ")");
+        try {
+            ChromatticSession session = lifeCycle.getChromattic().openSession();
+            // Aggregate last week data
+            SocialStatistic statItem = this.setDayStat(session, year, day, true);
+            results.add(this.getStatisticDAO(statItem, StatisticInterval.TYPE_DAY));
+            session.save();
+
+
+        } catch (Exception e) {
+            log.error(e);
+        } finally {
+        }
+        log.info("==== Start of the Daily stats calculation (Manual Call : " + year + "-" + day + ")(" + (System.currentTimeMillis() - startTime) + "ms)");
+
+        return results;
+    }
+
+    
+    
     public List calculateWeeklyStatistics(int year, int week) {
         List<StatisticItemDAO> results = new ArrayList();
         long numberOfItems = -1;
@@ -250,14 +361,11 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
         return numberOfItems;
     }
 
-    /**
-     * This method save the data in the JCR
-     * @param session
-     * @param year
-     * @param week
-     * @param numberOfActivities
-     * @param allowUpdate if yes, the data will be updated, if it supports only the creation 
-     */
+    private SocialStatistic setDayStat(ChromatticSession session, int year, int day, boolean allowUpdate) throws RepositoryException {
+        StatisticInterval interval = new StatisticInterval(year, day, StatisticInterval.TYPE_DAY);
+        return this.saveStats(session, interval, StatisticInterval.TYPE_DAY, allowUpdate);
+    }
+
     private SocialStatistic setWeekStat(ChromatticSession session, int year, int week, boolean allowUpdate) throws RepositoryException {
         StatisticInterval interval = new StatisticInterval(year, week, StatisticInterval.TYPE_WEEK);
         return this.saveStats(session, interval, StatisticInterval.TYPE_WEEK, allowUpdate);
@@ -267,10 +375,73 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
         StatisticInterval interval = new StatisticInterval(year, month, StatisticInterval.TYPE_MONTH);
         return this.saveStats(session, interval, StatisticInterval.TYPE_MONTH, allowUpdate);
     }
+    
+    
+    public List deleteStatistic(int type, int year, int idInYear) {
+        
+        String parentFolder = "";
+        String typeLabel = "";
+        if ( type == StatisticInterval.TYPE_MONTH ) {
+            parentFolder = PARENT_FOLDER_MONTHLY_STATS;
+            typeLabel = StatisticInterval.TYPE_MONTH_TEXT;
+        } else if ( type == StatisticInterval.TYPE_WEEK ) { 
+            parentFolder = PARENT_FOLDER_WEEKLY_STATS; 
+            typeLabel = StatisticInterval.TYPE_WEEK_TEXT;
+        } else if ( type == StatisticInterval.TYPE_DAY ) {
+            parentFolder = PARENT_FOLDER_DAILY_STATS;
+            typeLabel = StatisticInterval.TYPE_DAY_TEXT;
+        } 
+        
+        List result = new ArrayList();
+        long startTime = System.currentTimeMillis();
+        log.info("==== Start of the validateStatisticList calculation ");
+
+        try {
+            ChromatticSession session = lifeCycle.getChromattic().openSession();
+                StatisticItemDAO itemDAO = new StatisticItemDAO();
+                String name = year + "-" + idInYear;
+                String pathToSearch = "./" + parentFolder + "/" + name;
+                // check if the stat file exists
+                SocialStatistic statItem = session.findByPath(SocialStatistic.class, pathToSearch);
+                if (statItem == null) {
+                    itemDAO.setYear(year);
+                    itemDAO.setId(idInYear);
+                    itemDAO.setType(typeLabel);
+                    itemDAO.setValue(-1);
+                    itemDAO.setElapsedTime( System.currentTimeMillis() - startTime );
+                    itemDAO.setExecutionDate( new Date() );
+                } else {
+                    itemDAO.setId(statItem.getIdInYear());
+                    itemDAO.setYear(statItem.getYear());
+                    itemDAO.setStartDate(statItem.getStartDate());
+                    itemDAO.setEndDate(statItem.getEndDate());
+                    itemDAO.setValue(-1);
+                    itemDAO.setType(typeLabel);
+                    itemDAO.setElapsedTime( System.currentTimeMillis() - startTime );
+                    itemDAO.setExecutionDate( new Date() );
+                    session.remove(statItem);
+                    session.save();
+                }
+
+                if (itemDAO != null) {
+                   
+                }
+                
+                result.add(itemDAO);
+
+
+        } catch (Exception e) {
+            log.error(e);
+        } finally {
+        }
+        
+        return result;
+    } 
 
     private SocialStatistic saveStats(ChromatticSession session, StatisticInterval interval, int type, boolean allowUpdate) throws RepositoryException {
         ActivityStatsWeekly parent = getStatisticParent(session, type);
         long numberOfItems = -1;
+        long startTime = System.currentTimeMillis();
 
         //interval.
         boolean callSave = false;
@@ -282,11 +453,11 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
             idInYear = idInYear + 1;
         }
 
-        String weeklyStatEntry = interval.getYear() + "-" + idInYear;
+        String statisticEntry = interval.getYear() + "-" + idInYear;
 
-        SocialStatistic statItem = session.findByPath(SocialStatistic.class, "./" + parent.getName() + "/" + weeklyStatEntry);
+        SocialStatistic statItem = session.findByPath(SocialStatistic.class, "./" + parent.getName() + "/" + statisticEntry);
         if (statItem == null) {
-            statItem = session.create(SocialStatistic.class, weeklyStatEntry);
+            statItem = session.create(SocialStatistic.class, statisticEntry);
             parent.getChildren().add(statItem);
             callSave = true;
         }
@@ -300,6 +471,7 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
             statItem.setStartDate(interval.getStartDate());
             statItem.setEndDate(interval.getEndDate());
             statItem.setExecutionDate(new Date());
+            statItem.setElapsedTime( System.currentTimeMillis() - startTime );
             callSave = true;
         }
 
@@ -318,7 +490,15 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
      */
     private ActivityStatsWeekly getStatisticParent(ChromatticSession session, int type) {
 
-        String parentFolder = (StatisticInterval.TYPE_MONTH == type) ? PARENT_FOLDER_MONTHLY_STATS : PARENT_FOLDER_WEEKLY_STATS;
+        String parentFolder = "";
+        if ( type == StatisticInterval.TYPE_MONTH ) {
+            parentFolder = PARENT_FOLDER_MONTHLY_STATS;
+        } else if ( type == StatisticInterval.TYPE_WEEK ) { 
+            parentFolder = PARENT_FOLDER_WEEKLY_STATS; 
+        } else if ( type == StatisticInterval.TYPE_DAY ) {
+            parentFolder = PARENT_FOLDER_DAILY_STATS;
+        } 
+
 
         //TODO: remove string: replace by configuration
         ActivityStatsWeekly weeklyStat = session.findByPath(ActivityStatsWeekly.class, "./" + parentFolder);
@@ -373,9 +553,19 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
      */
     public List validateStatisticList(int numberOfPeriodToCheck, int type) {
 
-        String parentFolder = (StatisticInterval.TYPE_MONTH == type) ? PARENT_FOLDER_MONTHLY_STATS : PARENT_FOLDER_WEEKLY_STATS;
-        String typeLabel = (StatisticInterval.TYPE_WEEK == type) ? "WEEK" : "MONTH";
-
+        String parentFolder = "";
+        String typeLabel = "";
+        if ( type == StatisticInterval.TYPE_MONTH ) {
+            parentFolder = PARENT_FOLDER_MONTHLY_STATS;
+            typeLabel = StatisticInterval.TYPE_MONTH_TEXT;
+        } else if ( type == StatisticInterval.TYPE_WEEK ) { 
+            parentFolder = PARENT_FOLDER_WEEKLY_STATS; 
+            typeLabel = StatisticInterval.TYPE_WEEK_TEXT;
+        } else if ( type == StatisticInterval.TYPE_DAY ) {
+            parentFolder = PARENT_FOLDER_DAILY_STATS;
+            typeLabel = StatisticInterval.TYPE_DAY_TEXT;
+        } 
+        
 
 
         List result = new ArrayList();
@@ -391,17 +581,17 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
 
             for (int i = 0; i < numberOfPeriodToCheck; i++) {
                 StatisticItemDAO itemDAO = new StatisticItemDAO();
-                String name = cal.get(Calendar.YEAR) + "-";
+                String name = null; //cal.get(Calendar.YEAR) + "-";
 
                 if (StatisticInterval.TYPE_MONTH == type) {
                     cal.add(Calendar.MONTH, -1);
+                    name = cal.get(Calendar.YEAR) + "-";
                     name = name + (cal.get(Calendar.MONTH)+1); // get human readable month
                 } else {
                     cal.add(Calendar.WEEK_OF_YEAR, -1);
+                    name = cal.get(Calendar.YEAR) + "-";
                     name = name + cal.get(Calendar.WEEK_OF_YEAR);
                 }
-
-
                 String pathToSearch = "./" + parentFolder + "/" + name;
                 // check if the stat file exists
                 SocialStatistic statItem = session.findByPath(SocialStatistic.class, pathToSearch);
@@ -410,6 +600,8 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
                     itemDAO.setId((StatisticInterval.TYPE_MONTH == type) ? cal.get(Calendar.MONTH) + 1 : cal.get(Calendar.WEEK_OF_YEAR));
                     itemDAO.setType(typeLabel);
                     itemDAO.setValue(-1);
+                    itemDAO.setElapsedTime( System.currentTimeMillis() - startTime );
+                    itemDAO.setExecutionDate( new Date() );
                 } else {
                     itemDAO.setId(statItem.getIdInYear());
                     itemDAO.setYear(statItem.getYear());
@@ -417,6 +609,8 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
                     itemDAO.setEndDate(statItem.getEndDate());
                     itemDAO.setValue(statItem.getValue());
                     itemDAO.setType(typeLabel);
+                    itemDAO.setElapsedTime( statItem.getElapsedTime() );
+                    itemDAO.setExecutionDate( statItem.getExecutionDate() );
                 }
 
                 result.add(itemDAO);
@@ -435,8 +629,16 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
         return result;
     }
 
-    public StatisticItemDAO getStatisticDAO(SocialStatistic statItem, int type) {
-        String typeLabel = (StatisticInterval.TYPE_WEEK == type) ? "WEEK" : "MONTH";
+    public StatisticItemDAO getStatisticDAO(SocialStatistic statItem, int type) {        
+        String typeLabel = "";
+        if ( type == StatisticInterval.TYPE_MONTH ) {
+            typeLabel = StatisticInterval.TYPE_MONTH_TEXT;
+        } else if ( type == StatisticInterval.TYPE_WEEK ) { 
+            typeLabel = StatisticInterval.TYPE_WEEK_TEXT;
+        } else if ( type == StatisticInterval.TYPE_DAY ) {
+            typeLabel = StatisticInterval.TYPE_DAY_TEXT;
+        }         
+        
         StatisticItemDAO itemDAO = new StatisticItemDAO();
         itemDAO.setType(typeLabel);
         itemDAO.setId(statItem.getIdInYear());
@@ -446,31 +648,43 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
         itemDAO.setValue(statItem.getValue());
         return itemDAO;
     }
-}
-///
-//            {
-//                String totalAct = "select * from exo:activity";
+    
+    
+    public void updateActivitiesTestData() {
+        throw new IllegalStateException("Method not implemented");
+
+        //        
+//        try {
+//            ChromatticSession session = lifeCycle.getChromattic().openSession();
+//        
 //
-//                QueryManager qm = session.getJCRSession().getWorkspace().getQueryManager();
-//                Query queryJCR = qm.createQuery(totalAct, Query.SQL);
-//                QueryResult result = queryJCR.execute();
-//                NodeIterator nodeIterator = result.getNodes();
-//                    Calendar cal = Calendar.getInstance();
-//                while (nodeIterator.hasNext()) {
-//                    Node activity = (Node) nodeIterator.next();
-//                    Random r = new Random();
-//                    int daysOp = (int) r.nextInt(170);
-//                    cal.add(Calendar.DAY_OF_YEAR, (daysOp * -1));
+//            String totalAct = "select * from exo:activity";
 //
-//                    activity.setProperty("exo:postedTime", cal.getTimeInMillis());
-//                    activity.setProperty("exo:updatedTimestamp", cal.getTimeInMillis());
-//                    
-//                    activity.save();
-//                    
-//                    System.out.println("Cal "+ cal.getTime() + " - "+ activity.getPath());
-//                    cal.setTime(new Date());
-//                }
+//            QueryManager qm = session.getJCRSession().getWorkspace().getQueryManager();
+//            Query queryJCR = qm.createQuery(totalAct, Query.SQL);
+//            QueryResult result = queryJCR.execute();
+//            NodeIterator nodeIterator = result.getNodes();
+//            Calendar cal = Calendar.getInstance();
+//            while (nodeIterator.hasNext()) {
+//                Node activity = (Node) nodeIterator.next();
+//                Random r = new Random();
+//                int daysOp = (int) r.nextInt(400);
+//                cal.add(Calendar.DAY_OF_YEAR, (daysOp * -1));
 //
+//                activity.setProperty("exo:postedTime", cal.getTimeInMillis());
+//                activity.setProperty("exo:updatedTimestamp", cal.getTimeInMillis());
 //
-//
+//                activity.save();
+//                cal.setTime(new Date());
 //            }
+//        
+//        
+//        } catch (Exception e) {
+//            log.error(e);
+//        } finally {
+//        }      
+    }
+
+    
+}
+

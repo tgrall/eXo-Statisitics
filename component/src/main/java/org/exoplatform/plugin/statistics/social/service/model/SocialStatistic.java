@@ -33,6 +33,15 @@ import org.chromattic.api.annotations.Property;
 @PrimaryType(name = "exo:statisticItem")
 public abstract class SocialStatistic {
 
+    public final static String FIELD_ID_IN_YEAR = "idInYear";
+    public final static String FIELD_YEAR = "year";
+    public final static String FIELD_START_DATE = "startDate";
+    public final static String FIELD_END_DATE = "endDate";
+    public final static String FIELD_VALUE_COUNT = "value";
+    public final static String FIELD_EXECUTION_DATE = "executionDate";
+    public final static String FIELD_ELAPSED_TIME = "elapsedTime";
+    
+    
    @Id
    public abstract String getId();
 
@@ -71,4 +80,9 @@ public abstract class SocialStatistic {
    @Property(name = "value")
    public abstract long getValue();
    public abstract void setValue(long value);
+
+   @Property(name = "elapsedTime")
+   public abstract long getElapsedTime();
+   public abstract void setElapsedTime(long elapsedTime);
+
 }

@@ -7,5 +7,7 @@
     <version>0.1.0</version>
   </parent>
   <artifactId>exo.platform.plugins.statistics.social.gadgets</artifactId>
-  <name>eXo Statistics</name>
+  <name>eXo Statistics - Gadgets</name>
+    <description>Visualization of the Statistics using Gadgets</description>
+    <version>0.2.0</version>
 </project>

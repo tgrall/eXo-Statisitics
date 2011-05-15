@@ -25,8 +25,8 @@ public class SocialWeeklyStatisticJob extends SocialStatisticJob {
 
     @Override
     public void execute(JobExecutionContext jec) throws JobExecutionException {
-        this.getStatisticService().calculateWeeklyStatistics();
-        
+      log.info("---- Weekly Job ---- ");
+      this.getStatisticService().calculateWeeklyStatistics();        
     }
     
 

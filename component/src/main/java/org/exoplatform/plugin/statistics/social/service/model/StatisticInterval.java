@@ -29,6 +29,11 @@ public class StatisticInterval {
 
     public final static int TYPE_WEEK = 0;
     public final static int TYPE_MONTH = 1;
+    public final static int TYPE_DAY = 2;
+    public final static String TYPE_WEEK_TEXT = "WEEK";
+    public final static String TYPE_MONTH_TEXT = "MONTH";
+    public final static String TYPE_DAY_TEXT = "DAY";
+
     private int year = -1;
     private int id = -1;
     private int intervalType = 0;
@@ -104,6 +109,28 @@ public class StatisticInterval {
             cal.add(Calendar.MILLISECOND, -1);
             endDate = cal.getTime();
 
+        } else if (intervalType == TYPE_DAY) {
+            
+            // take the date and find the first day for it
+            cal.setTime(dateToEvaluate);
+            int dayNumber = cal.get(Calendar.DAY_OF_YEAR);
+            if (this.year == -1) {
+                this.year = cal.get(Calendar.YEAR);
+            }
+            this.id = dayNumber;
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            startDate = cal.getTime();
+
+            // calculate the last day of the week for this let's just
+            // add a new week and remove 1 ms.
+            cal.add(Calendar.DAY_OF_YEAR, 1);
+            cal.add(Calendar.MILLISECOND, -1);
+
+            endDate = cal.getTime();
+            
         }
     }
 
@@ -137,8 +164,18 @@ public class StatisticInterval {
             cal.set(Calendar.MILLISECOND, 0);
             startDate = cal.getTime();
             dateToEvaluate = cal.getTime();
-        }
+        } else if (intervalType == TYPE_DAY) {
 
+            cal.set(Calendar.YEAR, year);
+            cal.set(Calendar.DAY_OF_YEAR, id);
+            cal.set(Calendar.HOUR, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            startDate = cal.getTime();
+            dateToEvaluate = cal.getTime();
+        }
+        
         setIntervalDates();
     }
 

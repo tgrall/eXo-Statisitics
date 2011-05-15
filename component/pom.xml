@@ -8,7 +8,6 @@
   </parent>
   <artifactId>exo.platform.plugins.statistics.social.component</artifactId>
   <packaging>jar</packaging>
-  <name>Statistics Social - Services</name>
     <build>
         <plugins>
             <plugin>
@@ -96,5 +95,6 @@
         <version>${org.json.version}</version>
       </dependency>    	  
   </dependencies>
-
+    <name>eXo Statistics - Service</name>
+    <description>eXo Statistics - Mains services regarding the generation of statistic data</description>
 </project>

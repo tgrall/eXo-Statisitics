@@ -61,6 +61,29 @@
         </component-plugin>
     </external-component-plugins>
 
+    <!-- Configuration of the Monthly job for Social Activities -->
+    <external-component-plugins>
+        <target-component>org.exoplatform.services.scheduler.JobSchedulerService</target-component>
+        <component-plugin>
+            <name>SocialDailyStatisticJob</name>
+            <set-method>addPeriodJob</set-method>
+            <type>org.exoplatform.services.scheduler.PeriodJob</type>
+            <description>add a Social Activities Daily job to the JobSchedulerService</description>
+            <init-params>
+                <properties-param>
+                    <name>job.info</name>
+                    <description>Save the Social Activities Daily Statistic data periodically</description>
+                    <property name="jobName" value="periodically"/>
+                    <property name="groupName" value="SocialDailyStatisticJob"/>
+                    <property name="job" value="org.exoplatform.plugin.statistics.social.service.job.SocialDailyStatisticJob"/>
+                    <property name="repeatCount" value="0"/>
+                    <property name="period" value="36000"/>    
+                    <property name="startTime" value="+0"/>
+                    <property name="endTime" value=""/>               
+                </properties-param>
+            </init-params>
+        </component-plugin>
+    </external-component-plugins>
 
  
 

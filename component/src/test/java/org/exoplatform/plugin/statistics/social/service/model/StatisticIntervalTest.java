@@ -47,7 +47,6 @@ public class StatisticIntervalTest extends TestCase {
         dateToTest = cal.getTime();
 
         int value = cal.get(Calendar.WEEK_OF_YEAR);
-        System.out.println("VVV " + value);
 
     }
 
@@ -62,10 +61,6 @@ public class StatisticIntervalTest extends TestCase {
     }
 
     public void testGetStartDateForMonthByID() {
-
-
-
-        System.out.println(" =====  testGetStartDateForMonthByID ==== ");
         int year = 2011;
         int month = 2;
         StatisticInterval instance = new StatisticInterval(year, month, StatisticInterval.TYPE_MONTH);
@@ -88,11 +83,9 @@ public class StatisticIntervalTest extends TestCase {
     }
 
     public void testGetStartDateForWeekByID() {
-        System.out.println(" =====  testGetStartDateForWeekByID ==== ");
         int year = 2011;
         int week = 12;
         StatisticInterval instance = new StatisticInterval(year, week, StatisticInterval.TYPE_WEEK);
-        System.out.println("testGetStartDateForWeekByID : " + instance.getStartDate());
         Calendar cal = Calendar.getInstance();
         Long longTimeStart = new Long("1299970800000");
         cal.setTimeInMillis(longTimeStart);
