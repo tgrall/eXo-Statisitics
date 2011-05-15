@@ -1,24 +1,58 @@
+<?xml version="1.0"?>
 <nodeTypes xmlns:nt="http://www.jcp.org/jcr/nt/1.0" xmlns:mix="http://www.jcp.org/jcr/mix/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0">
-
-  <nodeType name="exo:statisticItem" isMixin="false" hasOrderableChildNodes="false">
+	<nodeType name="exo:statisticItem" isMixin="false" hasOrderableChildNodes="false">
+		<supertypes>
+			<supertype>mix:referenceable</supertype>
+			<supertype>nt:base</supertype>
+		</supertypes>
+		<propertyDefinitions>
+			<propertyDefinition name="value" requiredType="Long" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
+				<valueConstraints/>
+			</propertyDefinition>
+			<propertyDefinition name="executionDate" requiredType="Date" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
+				<valueConstraints/>
+			</propertyDefinition>
+			<propertyDefinition name="startDate" requiredType="Date" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
+				<valueConstraints/>
+			</propertyDefinition>
+			<propertyDefinition name="endDate" requiredType="Date" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
+				<valueConstraints/>
+			</propertyDefinition>
+			<!--propertyDefinition name="startDateTimeStamp" requiredType="Long" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
+				<valueConstraints/>
+			</propertyDefinition>
+			<propertyDefinition name="endDateTimeStamp" requiredType="Long" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
+				<valueConstraints/>
+			</propertyDefinition-->			
+			<propertyDefinition name="year" requiredType="Long" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
+				<valueConstraints/>
+			</propertyDefinition>
+			<propertyDefinition name="type" requiredType="String" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
+				<valueConstraints/>
+			</propertyDefinition>
+			<propertyDefinition name="idInYear" requiredType="Long" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
+				<valueConstraints/>
+			</propertyDefinition>
+			<propertyDefinition name="elapsedTime" requiredType="Long" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
+				<valueConstraints/>
+			</propertyDefinition>
+				
+		</propertyDefinitions>
+	</nodeType>
+	
+  <nodeType name="exo:activityStatsWeekly" isMixin="false" hasOrderableChildNodes="false">
     <supertypes>
       <supertype>mix:referenceable</supertype>
-      <supertype>nt:base</supertype>
+      <supertype>nt:unstructured</supertype>
     </supertypes>
-    <propertyDefinitions>
-      <propertyDefinition name="executionDate" propertyType="Date" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
-        <valueConstraints/>
-      </propertyDefinition>
-      <propertyDefinition name="year" propertyType="Long" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
-        <valueConstraints/>
-      </propertyDefinition>
-      <propertyDefinition name="type" propertyType="String" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
-        <valueConstraints/>
-      </propertyDefinition>
-      <propertyDefinition name="idInYear" propertyType="Long" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" multiple="false">
-        <valueConstraints/>
-      </propertyDefinition>
-    </propertyDefinitions>
-    <childNodeDefinitions/>
-  </nodeType>
+    <propertyDefinitions/>
+    <childNodeDefinitions>
+      <childNodeDefinition name="*" defaultPrimaryType="" autoCreated="false" mandatory="false" onParentVersion="COPY" protected="false" sameNameSiblings="false">
+        <requiredPrimaryTypes>
+          <requiredPrimaryType>exo:statisticItem</requiredPrimaryType>
+        </requiredPrimaryTypes>
+      </childNodeDefinition>
+    </childNodeDefinitions>
+  </nodeType>	
+	
 </nodeTypes>

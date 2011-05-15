@@ -32,25 +32,36 @@ public interface SocialStatisticService {
     
     public final static String STATISTIC_ITEM_TYPE_WEEK = "WEEK";
     public final static String STATISTIC_ITEM_TYPE_MONTH = "MONTH";
+    public final static String STATISTIC_ITEM_TYPE_DAY = "DAY";
     
     
     public final String PARENT_FOLDER_WEEKLY_STATS = "WeeklyStats";
     public final String PARENT_FOLDER_MONTHLY_STATS = "MonthlyStats";
+    public final String PARENT_FOLDER_DAILY_STATS = "DailyStats";
     
     
     // method used by the automatic jobs
+    public long calculateDailyStatistics();    
     public long calculateWeeklyStatistics();
     public long calculateMonthlyStatistics();
         
     // manual methods
+    public List calculateDailyStatistics(int year, int day);
     public List calculateWeeklyStatistics(int year, int week);
     public List calculateMonthlyStatistics(int year, int month);
     public List getWeeklyStatistics();
     public List getMonthlyStatistics();
     public StatisticItemDAO getTotalActivities();
+    public List getStatistics(int type, int page, int pageSize);
+    
 
     // utility method
     public List validateMonthlyStatisticList(int numberOfMonth);    
     public List validateWeeklyStatisticList(int numberOfWeek);
+    public List deleteStatistic(int type, int year, int idInYear);
+    
+    
+    // internal method, should be pushed in tests
+    public void updateActivitiesTestData();    
     
 }

@@ -10,7 +10,7 @@
   <artifactId>statistics.social.parent</artifactId>
   <version>0.1.0</version>
   <packaging>pom</packaging>
-  <name>eXo Platform Plugins : Social Activities</name>
+  <name>eXo Platform Plugins : Statistics Plugin</name>
 
 
   <properties>

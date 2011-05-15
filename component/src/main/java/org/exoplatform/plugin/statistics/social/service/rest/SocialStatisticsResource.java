@@ -19,18 +19,16 @@
 package org.exoplatform.plugin.statistics.social.service.rest;
 
 import org.exoplatform.container.ExoContainerContext;
-import org.exoplatform.forum.service.ForumService;
-import org.exoplatform.forum.service.ForumStatistic;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.ws.rs.DELETE;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.MediaType;
@@ -42,44 +40,63 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.plugin.statistics.social.service.SocialStatisticService;
-import org.exoplatform.plugin.statistics.social.service.dao.StatisticItemDAO;
+import org.exoplatform.plugin.statistics.social.service.model.StatisticInterval;
 
 @Path("social-statistics")
 public class SocialStatisticsResource implements ResourceContainer {
-
+    
     private static final Log log = ExoLogger.getLogger(SocialStatisticsResource.class);
 
-
-        
     @GET
     @Path("/activities")
-    @Produces(MediaType.APPLICATION_JSON)   
-    public Response getTotalStatistics() {
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getTotalStatistics()  {
         CacheControl cacheControl = new CacheControl();
         cacheControl.setMaxAge(10);
-        MessageBean data = new MessageBean();        
+        MessageBean data = new MessageBean();
         List dataContent = new ArrayList();
-        dataContent.add( this.getStatisticService().getTotalActivities() );
+        dataContent.add(this.getStatisticService().getTotalActivities());
         data.setData(dataContent);
         return Response.ok(data, MediaType.APPLICATION_JSON).cacheControl(cacheControl).build();
 
     }
 
-
-
+    /*
     @GET
     @Path("/activities/weekly/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getWeeklyStatistics() {
+    CacheControl cacheControl = new CacheControl();
+    cacheControl.setNoCache(true);
+    cacheControl.setNoStore(true);
+    MessageBean data = new MessageBean();
+    data.setData(this.getStatisticService().getWeeklyStatistics());
+    return Response.ok(data, MediaType.APPLICATION_JSON).cacheControl(cacheControl).build();
+    
+    }
+    
+     * 
+     */
+    @GET
+    @Path("/activities/weekly")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getWeeklyStatisticsByPage(
+            @QueryParam("page") int page) {
         CacheControl cacheControl = new CacheControl();
         cacheControl.setNoCache(true);
         cacheControl.setNoStore(true);
         MessageBean data = new MessageBean();
-        data.setData(this.getStatisticService().getWeeklyStatistics());
+
+        
+        if (page == -1) {
+            data.setData(this.getStatisticService().getWeeklyStatistics());
+        } else {
+            data.setData(this.getStatisticService().getStatistics(StatisticInterval.TYPE_WEEK, page, 5));
+        }
         return Response.ok(data, MediaType.APPLICATION_JSON).cacheControl(cacheControl).build();
 
     }
-    
+
     @GET
     @Path("/activities/monthly/")
     @Produces(MediaType.APPLICATION_JSON)
@@ -88,11 +105,57 @@ public class SocialStatisticsResource implements ResourceContainer {
         cacheControl.setNoCache(true);
         cacheControl.setNoStore(true);
         MessageBean data = new MessageBean();
-        data.setData(this.getStatisticService().getMonthlyStatistics() );
+        data.setData(this.getStatisticService().getMonthlyStatistics());
         return Response.ok(data, MediaType.APPLICATION_JSON).cacheControl(cacheControl).build();
 
-    }    
-    
+    }
+
+    private Response deleteStatistics(int year, int idInYear, String type) {
+
+        // issue with
+        //   @DELETE
+        //   @Path("/activities/{type}/{year}/{id}")
+
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setNoCache(true);
+        cacheControl.setNoStore(true);
+
+
+        MessageBean data = new MessageBean();
+        int typeAsInt = 0;
+
+        if (type.equalsIgnoreCase("daily")) {
+            typeAsInt = StatisticInterval.TYPE_DAY;
+        } else if (type.equalsIgnoreCase("weekly")) {
+            typeAsInt = StatisticInterval.TYPE_WEEK;
+        } else if (type.equalsIgnoreCase("monthly")) {
+            typeAsInt = StatisticInterval.TYPE_MONTH;
+        }
+
+        data.setData(this.getStatisticService().deleteStatistic(typeAsInt, year, idInYear));
+
+        return Response.ok(data, MediaType.APPLICATION_JSON).cacheControl(cacheControl).build();
+    }
+
+    @DELETE
+    @Path("/activities/daily/{year}/{day}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteDayStatistics(
+            @PathParam("year") int year,
+            @PathParam("day") int day) {
+        Response response = this.deleteStatistics(year, day, "daily");
+        return response;
+    }
+
+    @DELETE
+    @Path("/activities/monthly/{year}/{month}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteMonthStatistics(
+            @PathParam("year") int year,
+            @PathParam("month") int month) {
+        Response response = this.deleteStatistics(year, month, "monthly");
+        return response;
+    }
 
     @POST
     @Path("/activities/monthly/{year}/{month}")
@@ -105,11 +168,22 @@ public class SocialStatisticsResource implements ResourceContainer {
         cacheControl.setNoCache(true);
         cacheControl.setNoStore(true);
 
-        
+
         MessageBean data = new MessageBean();
-        data.setData( this.getStatisticService().calculateMonthlyStatistics(year, month) );        
+        data.setData(this.getStatisticService().calculateMonthlyStatistics(year, month));
 
         return Response.ok(data, MediaType.APPLICATION_JSON).cacheControl(cacheControl).build();
+
+    }
+
+    @DELETE
+    @Path("/activities/weekly/{year}/{week}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteWeekStatistics(
+            @PathParam("year") int year,
+            @PathParam("week") int week) {
+        Response response = this.deleteStatistics(year, week, "weekly");
+        return response;
 
     }
 
@@ -119,16 +193,26 @@ public class SocialStatisticsResource implements ResourceContainer {
     public Response setWeekStatistics(
             @PathParam("year") int year,
             @PathParam("week") int week) {
-
         CacheControl cacheControl = new CacheControl();
         cacheControl.setNoCache(true);
         cacheControl.setNoStore(true);
-
         MessageBean data = new MessageBean();
-        data.setData( this.getStatisticService().calculateWeeklyStatistics(year, week) );
-
+        data.setData(this.getStatisticService().calculateWeeklyStatistics(year, week));
         return Response.ok(data, MediaType.APPLICATION_JSON).cacheControl(cacheControl).build();
+    }
 
+    @POST
+    @Path("/activities/daily/{year}/{day}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response setDayStatistics(
+            @PathParam("year") int year,
+            @PathParam("day") int day) {
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setNoCache(true);
+        cacheControl.setNoStore(true);
+        MessageBean data = new MessageBean();
+        data.setData(this.getStatisticService().calculateDailyStatistics(year, day));
+        return Response.ok(data, MediaType.APPLICATION_JSON).cacheControl(cacheControl).build();
     }
 
     @GET
@@ -136,15 +220,14 @@ public class SocialStatisticsResource implements ResourceContainer {
     @Produces(MediaType.APPLICATION_JSON)
     public Response validateStatistics(
             @QueryParam("nb") int numberOfLoop,
-            @PathParam("type") String type
-            ) {
+            @PathParam("type") String type) {
         CacheControl cacheControl = new CacheControl();
         cacheControl.setNoCache(true);
         cacheControl.setNoStore(true);
-        List data = new ArrayList();       
-        if ( type.equalsIgnoreCase("monthly") ) {
+        List data = new ArrayList();
+        if (type.equalsIgnoreCase("monthly")) {
             data = this.getStatisticService().validateMonthlyStatisticList(numberOfLoop);
-        } else if ( type.equalsIgnoreCase("weekly") ) {
+        } else if (type.equalsIgnoreCase("weekly")) {
             data = this.getStatisticService().validateWeeklyStatisticList(numberOfLoop);
         }
 
@@ -154,8 +237,23 @@ public class SocialStatisticsResource implements ResourceContainer {
 
     }
 
-    
-    
+    @GET
+    @Path("/activities/test-data")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response testData() {
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setNoCache(true);
+        cacheControl.setNoStore(true);
+
+        this.getStatisticService().updateActivitiesTestData();
+        
+        
+        MessageBean result = new MessageBean();
+        result.setData(null);
+        return Response.ok(result, MediaType.APPLICATION_JSON).cacheControl(cacheControl).build();
+
+    }
+
     private SocialStatisticService getStatisticService() {
         ExoContainer containerContext = ExoContainerContext.getCurrentContainer();
         return (SocialStatisticService) containerContext.getComponentInstanceOfType(SocialStatisticService.class);
