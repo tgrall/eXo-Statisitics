@@ -5,16 +5,12 @@
 package org.exoplatform.plugin.statistics.social.service.impl;
 
 import java.util.ArrayList;
-import javax.jcr.RepositoryException;
-import org.exoplatform.container.xml.InitParams;
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
-
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import javax.jcr.Node;
+
 import javax.jcr.NodeIterator;
+import javax.jcr.RepositoryException;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
@@ -22,15 +18,14 @@ import javax.jcr.query.QueryResult;
 import org.chromattic.api.ChromatticSession;
 import org.exoplatform.commons.chromattic.ChromatticLifeCycle;
 import org.exoplatform.commons.chromattic.ChromatticManager;
-
-
+import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.plugin.statistics.social.service.SocialStatisticService;
 import org.exoplatform.plugin.statistics.social.service.dao.StatisticItemDAO;
 import org.exoplatform.plugin.statistics.social.service.model.ActivityStatsWeekly;
 import org.exoplatform.plugin.statistics.social.service.model.SocialStatistic;
 import org.exoplatform.plugin.statistics.social.service.model.StatisticInterval;
-import org.exoplatform.services.jcr.impl.core.query.QueryImpl;
-
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 import org.picocontainer.Startable;
 
 /**
@@ -77,35 +72,26 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
 
 
         long startTime = System.currentTimeMillis();
-        List<StatisticItemDAO> results = new ArrayList();
         log.info("==== Start Total Activities Stats  ");
         try {
             ChromatticSession session = lifeCycle.getChromattic().openSession();
-            
-            // do not know how to control the order by with the
-            // Chromattic query builder so I use the standard QueryManager
-            String countActivitiesQuery = "select * from exo:statisticItem where "
-                    + "jcr:path like '/exo:applications/Social_Statistics/" + parentFolder + "/%' "
-                    + "order by startDate asc ";
-            QueryManager qm = session.getJCRSession().getWorkspace().getQueryManager();
-            Query queryJCR = qm.createQuery(countActivitiesQuery, Query.SQL);
-            QueryResult result = queryJCR.execute();
-            NodeIterator nodeIterator = result.getNodes();
-            while (nodeIterator.hasNext()) {
-                Node statItem = nodeIterator.nextNode();
-
-                // store the first date as the start of the stat
+            org.chromattic.api.query.QueryResult<SocialStatistic> queryResults =  session.createQueryBuilder(SocialStatistic.class)
+            .where("jcr:path like '/exo:applications/Social_Statistics/" + parentFolder + "/%' ")
+            .orderBy("startDate asc").get().objects();
+           
+            while(queryResults.hasNext()) {
+            	SocialStatistic statItem = queryResults.next();
+            	// store the first date as the start of the stat
                 // so only the first one
                 if (statisticItemDAO.getStartDate() == null) {
-                    statisticItemDAO.setStartDate(statItem.getProperty( SocialStatistic.FIELD_START_DATE ).getDate().getTime());
-                }
+                    statisticItemDAO.setStartDate(statItem.getStartDate());
+                }           
 
-                statisticItemDAO.setEndDate(statItem.getProperty( SocialStatistic.FIELD_END_DATE ).getDate().getTime());
-                numberOfItems = numberOfItems + statItem.getProperty( SocialStatistic.FIELD_VALUE_COUNT ).getLong();
+                statisticItemDAO.setEndDate(statItem.getEndDate());
+                numberOfItems = numberOfItems + statItem.getValue();
                 statisticItemDAO.setValue(numberOfItems);
                 statisticItemDAO.setElapsedTime( System.currentTimeMillis() - startTime );
-                statisticItemDAO.setExecutionDate( new Date() );
-
+                statisticItemDAO.setExecutionDate( new Date() );                
             }
 
 
@@ -137,37 +123,26 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
 
 
         long startTime = System.currentTimeMillis();
-        List<StatisticItemDAO> results = new ArrayList();
+        List<StatisticItemDAO> results = new ArrayList<StatisticItemDAO>();
         log.info("==== Start Return Stats  ");
         try {
-            ChromatticSession session = lifeCycle.getChromattic().openSession();
-
-            // do not know how to control the order by with the
-            // Chromattic query builder so I use the standard QueryManager
-            String countActivitiesQuery = "select * from exo:statisticItem where "
-                    + "jcr:path like '/exo:applications/Social_Statistics/" + parentFolder + "/%' "
-                    + "order by startDate desc ";
-            QueryManager qm = session.getJCRSession().getWorkspace().getQueryManager();
-            
-            
-            QueryImpl queryJCR = (QueryImpl)qm.createQuery(countActivitiesQuery, Query.SQL);
+        	
             // the first query page is 0, so we should remove 1
-            int offSet = (page-1)*pageSize;
-            queryJCR.setOffset( offSet );
-            queryJCR.setLimit(pageSize);
+            long offSet = (page-1)*pageSize;     	
+            ChromatticSession session = lifeCycle.getChromattic().openSession();
+            org.chromattic.api.query.QueryResult<SocialStatistic> queryResults =  session.createQueryBuilder(SocialStatistic.class)
+            .where("jcr:path like '/exo:applications/Social_Statistics/" + parentFolder + "/%' ")
+            .orderBy("startDate asc").get().objects(offSet, pageSize +0L);
             
-            QueryResult result = queryJCR.execute();
-            NodeIterator nodeIterator = result.getNodes();
-            while (nodeIterator.hasNext()) {
-                Node statItem = nodeIterator.nextNode();
+            while(queryResults.hasNext()) {
+            	SocialStatistic statItem = queryResults.next();
                 StatisticItemDAO itemDAO = new StatisticItemDAO();
                 itemDAO.setType(typeLabel);
-                itemDAO.setId(statItem.getProperty( SocialStatistic.FIELD_ID_IN_YEAR  ).getLong());
-                itemDAO.setYear(statItem.getProperty( SocialStatistic.FIELD_YEAR ).getLong());
-                itemDAO.setStartDate(statItem.getProperty( SocialStatistic.FIELD_START_DATE ).getDate().getTime());
-                itemDAO.setEndDate(statItem.getProperty( SocialStatistic.FIELD_END_DATE ).getDate().getTime());
-                itemDAO.setValue(statItem.getProperty( SocialStatistic.FIELD_VALUE_COUNT ).getLong());
-                
+                itemDAO.setId(statItem.getIdInYear());
+                itemDAO.setYear(statItem.getYear());
+                itemDAO.setStartDate(statItem.getStartDate());
+                itemDAO.setEndDate(statItem.getEndDate());
+                itemDAO.setValue(statItem.getValue());
                 results.add(itemDAO);
             }
 
@@ -202,32 +177,29 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
 
 
         long startTime = System.currentTimeMillis();
-        List<StatisticItemDAO> results = new ArrayList();
-        log.info("==== Start Return Stats  ");
+        List<StatisticItemDAO> results = new ArrayList<StatisticItemDAO>();
+        log.info("==== Start Return Weekly Stats  ");
         try {
             ChromatticSession session = lifeCycle.getChromattic().openSession();
 
-            // do not know how to control the order by with the
-            // Chromattic query builder so I use the standard QueryManager
-            String countActivitiesQuery = "select * from exo:statisticItem where "
-                    + "jcr:path like '/exo:applications/Social_Statistics/" + parentFolder + "/%' "
-                    + "order by startDate desc ";
-            QueryManager qm = session.getJCRSession().getWorkspace().getQueryManager();
-            Query queryJCR = qm.createQuery(countActivitiesQuery, Query.SQL);
-            QueryResult result = queryJCR.execute();
-            NodeIterator nodeIterator = result.getNodes();
-            while (nodeIterator.hasNext()) {
-                Node statItem = nodeIterator.nextNode();
+            
+            org.chromattic.api.query.QueryResult<SocialStatistic> queryResults =  session.createQueryBuilder(SocialStatistic.class)
+            .where("jcr:path like '/exo:applications/Social_Statistics/" + parentFolder + "/%' ")
+            .orderBy("startDate desc").get().objects();
+           
+            while(queryResults.hasNext()) {
+            	SocialStatistic statItem = queryResults.next();
                 StatisticItemDAO itemDAO = new StatisticItemDAO();
                 itemDAO.setType(typeLabel);
-                itemDAO.setId(statItem.getProperty( SocialStatistic.FIELD_ID_IN_YEAR  ).getLong());
-                itemDAO.setYear(statItem.getProperty( SocialStatistic.FIELD_YEAR ).getLong());
-                itemDAO.setStartDate(statItem.getProperty( SocialStatistic.FIELD_START_DATE ).getDate().getTime());
-                itemDAO.setEndDate(statItem.getProperty( SocialStatistic.FIELD_END_DATE ).getDate().getTime());
-                itemDAO.setValue(statItem.getProperty( SocialStatistic.FIELD_VALUE_COUNT ).getLong());
+                itemDAO.setId(statItem.getIdInYear());
+                itemDAO.setYear(statItem.getYear());
+                itemDAO.setStartDate(statItem.getStartDate());
+                itemDAO.setEndDate(statItem.getEndDate());
+                itemDAO.setValue(statItem.getValue());
                 results.add(itemDAO);
             }
-
+            
+  
 
         } catch (Exception e) {
             log.error(e);
