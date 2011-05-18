@@ -11,7 +11,21 @@
     <type>org.exoplatform.plugin.statistics.social.service.rest.SocialStatisticsResource</type>
   </component> 
   
-   
+  <external-component-plugins>
+     <target-component>org.exoplatform.services.jcr.RepositoryService</target-component>      
+     <component-plugin> 
+       <name>add.statistic.nodeType</name>
+       <set-method>addPlugin</set-method>
+       <type>org.exoplatform.services.jcr.impl.AddNodeTypePlugin</type>
+       <init-params>
+         <values-param>
+           <name>autoCreatedInNewRepository</name>
+           <description>Node types configuration file</description>
+           <value>jar:/conf/portal/jcr/statistic-nodetypes.xml</value>
+         </values-param>
+       </init-params>
+     </component-plugin>
+   </external-component-plugins>      
 
     <!-- Configuration of the Weekly job for Social Activities -->
     <external-component-plugins>
