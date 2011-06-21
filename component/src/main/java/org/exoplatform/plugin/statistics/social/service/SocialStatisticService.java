@@ -49,8 +49,11 @@ public interface SocialStatisticService {
     public List calculateDailyStatistics(int year, int day);
     public List calculateWeeklyStatistics(int year, int week);
     public List calculateMonthlyStatistics(int year, int month);
+
+    public List getDailyStatistics();
     public List getWeeklyStatistics();
     public List getMonthlyStatistics();
+    
     public StatisticItemDAO getTotalActivities();
     public List getStatistics(int type, int page, int pageSize);
     
@@ -58,6 +61,8 @@ public interface SocialStatisticService {
     // utility method
     public List validateMonthlyStatisticList(int numberOfMonth);    
     public List validateWeeklyStatisticList(int numberOfWeek);
+    public List validateDailyStatisticList(int numberOfDay);
+    
     public List deleteStatistic(int type, int year, int idInYear);
     
     

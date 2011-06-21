@@ -10,4 +10,9 @@
   <name>eXo Statistics - Gadgets</name>
     <description>Visualization of the Statistics using Gadgets</description>
     <version>0.2.0</version>
-</project>
+    <packaging>war</packaging>
+  <build>
+    <finalName>exo-plugin-statistics-gadgets</finalName>
+  </build>
+  </project>
+  

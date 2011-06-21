@@ -26,6 +26,7 @@ import org.exoplatform.services.rest.resource.ResourceContainer;
 import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -61,27 +62,33 @@ public class SocialStatisticsResource implements ResourceContainer {
 
     }
 
-    /*
+
     @GET
-    @Path("/activities/weekly/")
+    @Path("/activities/daily")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getWeeklyStatistics() {
-    CacheControl cacheControl = new CacheControl();
-    cacheControl.setNoCache(true);
-    cacheControl.setNoStore(true);
-    MessageBean data = new MessageBean();
-    data.setData(this.getStatisticService().getWeeklyStatistics());
-    return Response.ok(data, MediaType.APPLICATION_JSON).cacheControl(cacheControl).build();
-    
+    public Response getDailyStatisticsByPage(
+            @QueryParam("page") @DefaultValue("-1") int page) {
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setNoCache(true);
+        cacheControl.setNoStore(true);
+        MessageBean data = new MessageBean();
+
+        
+        if (page == -1) {
+            data.setData(this.getStatisticService().getDailyStatistics());
+        } else {
+            data.setData(this.getStatisticService().getStatistics(StatisticInterval.TYPE_DAY, page, 5));
+        }
+        return Response.ok(data, MediaType.APPLICATION_JSON).cacheControl(cacheControl).build();
+
     }
     
-     * 
-     */
+    
     @GET
     @Path("/activities/weekly")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getWeeklyStatisticsByPage(
-            @QueryParam("page") int page) {
+            @QueryParam("page") @DefaultValue("-1") int page) {
         CacheControl cacheControl = new CacheControl();
         cacheControl.setNoCache(true);
         cacheControl.setNoStore(true);
@@ -229,6 +236,8 @@ public class SocialStatisticsResource implements ResourceContainer {
             data = this.getStatisticService().validateMonthlyStatisticList(numberOfLoop);
         } else if (type.equalsIgnoreCase("weekly")) {
             data = this.getStatisticService().validateWeeklyStatisticList(numberOfLoop);
+        } else if (type.equalsIgnoreCase("daily")) {
+            data = this.getStatisticService().validateDailyStatisticList(numberOfLoop);
         }
 
         MessageBean result = new MessageBean();

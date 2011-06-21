@@ -82,6 +82,30 @@ public class StatisticIntervalTest extends TestCase {
 
     }
 
+    public void testFirstWeek2011() {
+        int year = 2011;
+        int week = 1;
+
+        {
+            StatisticInterval instance = new StatisticInterval(year, week, StatisticInterval.TYPE_WEEK);
+
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.YEAR, year);
+            cal.set(Calendar.WEEK_OF_YEAR, week);
+            cal.set(Calendar.DAY_OF_WEEK, 1);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            System.out.println(" CAL   " + cal.getTime());
+
+            System.out.println(" START  " + instance.getStartDate());
+            System.out.println(" END  " + instance.getEndDate());
+        }
+
+
+    }
+
     public void testGetStartDateForWeekByID() {
         int year = 2011;
         int week = 12;
