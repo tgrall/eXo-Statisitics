@@ -542,9 +542,9 @@ public class SocialStatisticServiceDefaultImpl implements SocialStatisticService
      */
     private long getNumberOfActivities(StatisticInterval interval, ChromatticSession session) throws RepositoryException {
         long queryStartTime = System.currentTimeMillis();
-        String countActivitiesQuery = "select uuid from exo:activity where exo:postedTime >= "
+        String countActivitiesQuery = "select uuid from soc:activity where soc:postedTime >= "
                 + interval.getStartDate().getTime()
-                + " and exo:postedTime <= " + interval.getEndDate().getTime();
+                + " and soc:postedTime <= " + interval.getEndDate().getTime();
         QueryManager qm = session.getJCRSession().getWorkspace().getQueryManager();
         Query queryJCR = qm.createQuery(countActivitiesQuery, Query.SQL);
         QueryResult result = queryJCR.execute();

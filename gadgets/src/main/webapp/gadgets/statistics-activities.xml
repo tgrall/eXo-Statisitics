@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+  <ModulePrefs title="Statistics: Activities" description="This gadget show statistics about activities" >
+    <Require feature="dynamic-height"/>
+    <Locale messages="locale/default.xml" />    
+  </ModulePrefs>
+  <Content type="html">
+    <![CDATA[     
+    <!-- google
+    <link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/ui-lightness/jquery-ui.css" />
+    <script language="javascript" type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.0/jquery.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.min.js"></script>
+    -->
+    
+    <link type="text/css" rel="stylesheet" href="/exo-ajax-libraries/jquery/jquery-ui/css/ui-lightness/jquery-ui-1.8.12.custom.css" />
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jquery-ui/js/jquery-1.5.1.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jquery-ui/js/jquery-ui-1.8.12.custom.min.js"></script>  
+    
+    <!-- BEGIN: load jqplot -->
+    <link rel="stylesheet" type="text/css" href="/exo-ajax-libraries/jquery/jqplot/jquery.jqplot.min.css" />
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jqplot/jquery.jqplot.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jqplot/plugins/jqplot.dateAxisRenderer.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jqplot/plugins/jqplot.highlighter.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jqplot/plugins/jqplot.cursor.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jqplot/plugins/jqplot.barRenderer.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jqplot/plugins/jqplot.categoryAxisRenderer.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jqplot/plugins/jqplot.pointLabels.min.js"></script>   
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jqplot/plugins/jqplot.canvasAxisTickRenderer.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jqplot/plugins/jqplot.barRenderer.min.js"></script>   
+    
+    <!-- END: load jqplot -->     
+    
+    <!-- BEGIN: load jquery pagination -->
+    <link rel="stylesheet" type="text/css" href="/exo-ajax-libraries/jquery/plugins/pagination/pagination.css" />
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/plugins/pagination/jquery.pagination.js"></script>
+    <!-- END: load jquery pagination -->
+    
+    
+    <script type="text/javascript">
+      var restServiceUrl = "/rest/social-statistics/activities/";
+      var monthlyStatUrl = restServiceUrl + "monthly/";
+      var weeklyStatUrl = restServiceUrl + "weekly/";
+      var dailyStatUrl = restServiceUrl + "daily/";
+      var weeklyChartPlot = null;
+      var monthlyChartPlot = null;
+      var dailyChartPlot = null;
+      
+      var weeklyPage = 1;
+      var dailyPage = 1;
+      
+      // list of stats
+      var weeklyItems = new Array();
+      var monthlyItem = new Array();
+      var dailyItems = new Array();
+      
+      
+      /********** Utils **********/
+      function addZeros(number, length) {        
+        var str = '' + number;
+        while (str.length < length) {
+          str = '0' + str;
+        }
+        return str;     
+      }
+      /********** /Utils **********/
+      
+      function loadData() {
+        loadTotalData();
+        loadMonthlyData();
+        loadWeeklyData();
+        loadDailyData();
+        // hide tables
+        showHideSection('weeklyStatisticChart','weeklyStatisticTable');
+        showHideSection('dailyStatisticChart','dailyStatisticTable');
+        showHideSection('monthlyStatisticChart','monthlyStatistic');
+      }
+      
+      
+      function resizeGadget(contentSize) {
+        if (contentSize == null ){
+          contentSize = 0;
+        }
+        var totalHeight = $("#localGadgetContainer").height() + contentSize;
+        gadgets.window.adjustHeight(totalHeight);
+      }     
+      
+      
+      function loadTotalData() {
+        console.debug("Call loadTotalData URL : "+ restServiceUrl);
+        $.getJSON(restServiceUrl, loadTotalStats);
+      }
+      
+      function loadTotalStats(response) {
+        console.log("loadTotalStats");
+        var resultData = response.data;
+        var html = new Array();
+        for (var i = 0; i < resultData.length; i++)
+        {
+          var item = resultData[i];
+          var startDate = new Date(item.startDate.time);
+          var fromDate = startDate.getFullYear() +"/"+ addZeros(startDate.getMonth()+1,2) +"/"+ addZeros(startDate.getDate(),2);
+          var endDate = new Date(item.endDate.time);
+          var toDate = endDate.getFullYear() +"/"+ addZeros(endDate.getMonth()+1,2) +"/"+ addZeros(endDate.getDate(),2)
+              var value = item.value;
+          
+          html.push('<div class="IconLink">__MSG_from__ '+ fromDate +' __MSG_to__ '+ toDate +' : ' + item.value  +' __MSG_entries__ </i></div>');
+        }    
+        
+        html.push('__MSG_total_actitivies_message__');    
+        document.getElementById('loadTotalStats').innerHTML = html.join('');
+        resizeGadget();
+      }     
+      
+      
+      function loadMonthlyData() {
+        $.getJSON(monthlyStatUrl, loadMonltyStats);
+      }
+      
+      function loadMonltyStats(response) {
+        console.log("loadMonltyStats");
+        var resultData = response.data;
+        var html = new Array();
+        var chartData=[]; //data for draw chart
+        for (var i = 0; i < resultData.length; i++)
+        {
+          var item = resultData[i];
+          var startDate = new Date(item.startDate.time);
+          var endDate = new Date(item.endDate.time);
+          var monthNameAsString = startDate.getFullYear() + '-' + addZeros(endDate.getMonth()+1,2);
+          var value = item.value;
+          
+          html.push('<div class="IconLink">'+ monthNameAsString +' : ' + item.value  +' entries</i></div>');
+          chartData.push([monthNameAsString, item.value ]);
+        }        
+        document.getElementById('monthlyStatistic').innerHTML = html.join('');
+        createChart("MONTH",chartData);      
+        resizeGadget();
+      }
+      
+      function moreData(typeOfData) {
+        if (typeOfData == 'WEEK') {
+          weeklyPage = weeklyPage +1;
+          loadWeeklyData();
+        } else if (typeOfData == 'MONTH') {
+          monthlyPage = monthlyPage +1;
+          loadMonthlyData();
+        } else if (typeOfData == 'DAY') {
+          dailyPage = dailyPage +1;
+          loadDailyData();
+        }
+      }
+      
+      function clearData(typeOfData) {
+        if (typeOfData == 'WEEK') {
+          weeklyPage = 1;
+          weeklyItems = new Array();
+          loadWeeklyData();
+        } else if (typeOfData == 'WEEK') {
+          monthlyPage = 1;
+          monthlyItems = new Array();
+          loadMonthlyData();
+        } else if (typeOfData == 'DAY') {
+          dailyPage = 1;
+          dailyItems = new Array();
+          loadDailyData();
+        }
+      }      
+      
+
+
+      /********************/
+      function loadDailyData() {
+      console.debug(dailyStatUrl +"?page="+ dailyPage);
+        $.getJSON(dailyStatUrl +"?page="+ dailyPage , loadDailyStats);
+        
+      }
+      
+      
+      function loadDailyStats(response) {
+        var resultData = response.data;
+        var html = new Array();
+        var chartData=[]; //data for draw chart       
+        var newData =  resultData;
+        var buff = dailyItems.concat(newData);
+        dailyItems = buff;
+       
+        for (var i = 0; i < dailyItems.length; i++)
+        {
+          var item = dailyItems[i];
+          var startDate = new Date(item.startDate.time);
+          var startDateString = startDate.getFullYear() +"/"+ addZeros(startDate.getMonth()+1,2) +"/"+ addZeros(startDate.getDate(),2);            
+          var endDate = new Date(item.endDate.time);
+          var endDateString = endDate.getFullYear() +"/"+ addZeros(endDate.getMonth()+1,2) +"/"+ addZeros(endDate.getDate(),2);
+          var value = item.value;
+          
+          html.push('<div class="IconLink" >'+ startDateString +' - '+ endDateString + ' : ' + item.value  +' entries</i></div>');
+          var chartName = startDateString;
+          chartData.push([ startDateString , item.value ]);
+        }        
+        document.getElementById('dailyStatistic').innerHTML = html.join('');
+        createChart("DAY",chartData);
+        
+        var optInit = getOptions(dailyPageSelectCallback);
+        $("#dailyPaginator").pagination(dailyItems.length, optInit);       
+        
+        resizeGadget();
+      }       
+      
+      /*********************/
+      
+      function loadWeeklyData() {
+        $.getJSON(weeklyStatUrl +"?page="+ weeklyPage , loadWeeklyStats);
+        
+      }
+      
+      
+      function loadWeeklyStats(response) {
+        var resultData = response.data;
+        var html = new Array();
+        var chartData=[]; //data for draw chart       
+        var newData =  resultData;
+        var buff = weeklyItems.concat(newData);
+        weeklyItems = buff;
+       
+        for (var i = 0; i < weeklyItems.length; i++)
+        {
+          var item = weeklyItems[i];
+          var startDate = new Date(item.startDate.time);
+          var startDateString = startDate.getFullYear() +"/"+ addZeros(startDate.getMonth()+1,2) +"/"+ addZeros(startDate.getDate(),2);            
+          var endDate = new Date(item.endDate.time);
+          var endDateString = endDate.getFullYear() +"/"+ addZeros(endDate.getMonth()+1,2) +"/"+ addZeros(endDate.getDate(),2);
+          var value = item.value;
+          
+          html.push('<div class="IconLink" >'+ startDateString +' - '+ endDateString + ' : ' + item.value  +' entries</i></div>');
+          var chartName = startDateString;
+          chartData.push([ startDateString , item.value ]);
+        }        
+        document.getElementById('weeklyStatistic').innerHTML = html.join('');
+        createChart("WEEK",chartData);
+        
+        var optInit = getOptions(weeklyPageSelectCallback);
+        $("#weeklyPaginator").pagination(weeklyItems.length, optInit);
+        
+        
+        resizeGadget();
+      }      
+      
+      function createChart(type, dataList){
+        var elementName = null;
+        if (type == "WEEK" ) {
+          elementName = "weeklyStatisticChart";
+        } else if (type == "MONTH" ) {
+          elementName = "monthlyStatisticChart";
+        } else if (type == "DAY" ) {
+          elementName = "dailyStatisticChart";
+        }        
+        document.getElementById(elementName).innerHTML='';
+        
+        
+        var chart = $.jqplot(elementName, [dataList], {  
+          axesDefaults: {
+            tickRenderer: $.jqplot.CanvasAxisTickRenderer ,
+            tickOptions: {
+              angle: -30,
+              fontSize: '10pt'
+            }
+          },          
+          axes:{
+            yaxis:{min:0,tickOptions:{formatString:'%.0f'}},
+            xaxis:{
+              renderer: $.jqplot.CategoryAxisRenderer,
+              tickOptions: {angle: -90,fontSize: '10pt'}
+            }
+          },
+          series:[{color:'#FF4500'},{lineWidth:1}],            
+          highlighter: { sizeAdjust: 10,  useAxesFormatters: false},
+          cursor: { show: true, zoom: true}
+        });
+        
+        if (type == "WEEK" ) {
+          weeklyChartPlot = chart;
+        } else if (type == "MONTH" ) {
+          monthlyChartPlot = chart;
+        } else if (type == "DAY" ) {
+          dailyChartPlot = chart;
+        }
+        
+      }
+      
+      function showHideSection(elementToShow, elementToHide) {
+        $('#' + elementToHide).hide();        
+        $('#' + elementToShow).show();
+        resizeGadget();
+      }
+      
+      function init() {
+  
+    /**** BEGIN : Accordion initialization ****/
+        $("#accordion").accordion({
+          autoHeight: false,
+          navigation: true
+        });           
+        $(function() {
+          $('#accordion').bind('accordionchange', function(event, ui) {
+            var index = $(this).find("h3").index ( ui.newHeader[0] );
+            if (index == 1) {
+              dailyChartPlot.replot();
+            } else if (index == 2) {
+              weeklyChartPlot.replot();
+            } else if (index == 3) {
+              monthlyChartPlot.replot();
+            }
+          });         
+          $("#accordion").accordion({
+            change: function(event, ui) {
+              resizeGadget(ui.newContent.height());
+            }
+          });
+        });
+    /**** END : Accordion initialization ****/
+        
+        loadData();
+      }      
+      
+      
+      /** BEGIN : Pagination **/    
+      
+      
+      function weeklyPageSelectCallback(page_index, paginationContainer){
+        var pageSize = 5;
+        var max_elem = Math.min((page_index+1) * pageSize, weeklyItems.length);
+        var html = new Array();
+        for(var i=page_index*pageSize;i<max_elem;i++)
+        {
+          var item = weeklyItems[i];
+          var startDate = new Date(item.startDate.time);
+          var startDateString = startDate.getFullYear() +"/"+ addZeros(startDate.getMonth()+1,2) +"/"+ addZeros(startDate.getDate(),2);            
+          var endDate = new Date(item.endDate.time);
+          var endDateString = endDate.getFullYear() +"/"+ addZeros(endDate.getMonth()+1,2) +"/"+ addZeros(endDate.getDate(),2);
+          var value = item.value;
+          
+          html.push('<div class="IconLink" >'+ startDateString +' - '+ endDateString + ' : ' + item.value  +' entries</i></div>');
+        }
+        document.getElementById('weeklyStatistic').innerHTML = html.join('');
+        resizeGadget();
+      }     
+ 
+      function dailyPageSelectCallback(page_index, paginationContainer){
+        var pageSize = 5;
+        var max_elem = Math.min((page_index+1) * pageSize, dailyItems.length);
+        var html = new Array();
+        for(var i=page_index*pageSize;i<max_elem;i++)
+        {
+          var item = dailyItems[i];
+          var startDate = new Date(item.startDate.time);
+          var startDateString = startDate.getFullYear() +"/"+ addZeros(startDate.getMonth()+1,2) +"/"+ addZeros(startDate.getDate(),2);            
+          var endDate = new Date(item.endDate.time);
+          var endDateString = endDate.getFullYear() +"/"+ addZeros(endDate.getMonth()+1,2) +"/"+ addZeros(endDate.getDate(),2);
+          var value = item.value;
+          
+          html.push('<div class="IconLink" >'+ startDateString +' - '+ endDateString + ' : ' + item.value  +' entries</i></div>');
+        }
+        document.getElementById('dailyStatistic').innerHTML = html.join('');
+        resizeGadget();
+      }
+     
+      // This function creates an option object for the pagination function.
+      function getOptions(callbackMethod){
+        var opt = {callback: callbackMethod};
+        opt.prev_text = "__MSG_paginator_prev__";
+        opt.next_text = "__MSG_paginator_next__";
+        opt.items_per_page = 5;
+        return opt;
+      }
+      
+      
+      
+      /** END : Pagination **/
+      
+      
+      gadgets.util.registerOnLoadHandler(init);
+      
+    </script>
+    
+    <div id="localGadgetContainer">        
+      <h1>eXo Social Activities</h1>
+      
+      <div id="accordion" style="margin-top:2px">
+        
+        
+        <h3><a href="#">Social Activities</a></h3>
+        <div id="loadTotalStats">
+          Loading....
+        </div>      
+        
+        
+        
+        <h3><a href="#">Activities by Day</a></h3>
+        <div id="dailyStatsContainer">
+          <div id="dailyStatisticActions" style="text-align:center">
+            <a href="javascript:showHideSection('dailyStatisticTable','dailyStatisticChart')">Table</a> |
+            <a href="javascript:showHideSection('dailyStatisticChart','dailyStatisticTable')">Charts</a>
+          </div>
+          <div id="dailyStatisticTable">
+            <div id="dailyStatistic">
+              Loading....
+            </div>
+            <div id="dailyPaginator" class="pagination"></div>
+          </div>
+          <div id="dailyStatisticChart">
+          </div>
+          <div id="dailyStatisticActionsFooter" style="text-align:center">
+            <a href="javascript:moreData('DAY')">More data</a> |
+            <a href="javascript:clearData('DAY')">Reset</a>
+          </div>
+        </div>        
+        
+        
+        <h3><a href="#">Activities by Weeks</a></h3>
+        <div id="weeklyStatsContainer">
+          <div id="weeklyStatisticActions" style="text-align:center">
+            <a href="javascript:showHideSection('weeklyStatisticTable','weeklyStatisticChart')">Table</a> |
+            <a href="javascript:showHideSection('weeklyStatisticChart','weeklyStatisticTable')">Charts</a>
+          </div>
+          <div id="weeklyStatisticTable">
+            <div id="weeklyStatistic">
+              Loading....
+            </div>
+            <div id="weeklyPaginator" class="pagination"></div>
+          </div>
+          <div id="weeklyStatisticChart">
+          </div>
+          <div id="weeklyStatisticActionsFooter" style="text-align:center">
+            <a href="javascript:moreData('WEEK')">More data</a> |
+            <a href="javascript:clearData('WEEK')">Reset</a>
+          </div>
+        </div>
+        
+        
+        <h3><a href="#">Activities by Month</a></h3>
+        <div id="monthlyStatsContainer">
+          <div id="monthlyStatisticActions" style="text-align:center">
+            <a href="javascript:showHideSection('monthlyStatistic','monthlyStatisticChart')">Table</a> |
+            <a href="javascript:showHideSection('monthlyStatisticChart','monthlyStatistic')">Charts</a>
+          </div>
+          <div id="monthlyStatistic">
+            Loading....
+          </div>
+          <div id="monthlyStatisticChart">
+          </div>
+          <div id="weeklyStatisticActionsFooter" style="text-align:center">
+            <a href="javascript:moreData('MONTH')">More data</a> |
+            <a href="javascript:clearData('MONTH')">Reset</a>
+          </div>          
+        </div>
+        
+      </div>
+      
+      <a href="javascript:init()">Refresh All</a>
+      
+      
+    </div>
+    
+    
+    ]]></Content></Module> 

@@ -75,11 +75,6 @@
         <version>${org.exoplatform.social.version}</version>
       </dependency>
 
-     <dependency>
-        <groupId>org.exoplatform.social</groupId>
-        <artifactId>exo.social.extras.document-composer-plugin</artifactId>
-        <version>${org.exoplatform.social.version}</version>
-      </dependency>
       
       
     <dependency>

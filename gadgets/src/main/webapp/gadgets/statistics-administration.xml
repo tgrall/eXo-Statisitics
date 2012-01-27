@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+  <ModulePrefs title="eXo Social Statistic Administration" description="eXo Social Statistic Administration" >
+    <Require feature="dynamic-height"/>
+    <Locale messages="locale/default.xml" />    
+  </ModulePrefs>
+  <Content type="html">
+    <![CDATA[  
+    <!-- google
+    <link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/ui-lightness/jquery-ui.css" />
+    <script language="javascript" type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.0/jquery.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.min.js"></script>
+    -->
+    
+    <link type="text/css" rel="stylesheet" href="/exo-ajax-libraries/jquery/jquery-ui/css/ui-lightness/jquery-ui-1.8.12.custom.css" />
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jquery-ui/js/jquery-1.5.1.min.js"></script>
+    <script language="javascript" type="text/javascript" src="/exo-ajax-libraries/jquery/jquery-ui/js/jquery-ui-1.8.12.custom.min.js"></script>
+    
+    
+    
+    
+    <script type="text/javascript">
+      var restServiceUrl = "/rest/social-statistics/activities/";
+
+      var monthlyStatValidationUrl = restServiceUrl + "monthly/validate";
+      var weeklyStatValidationUrl = restServiceUrl + "weekly/validate";     
+      var dailyStatValidationUrl = restServiceUrl + "daily/validate";     
+      
+      var updateWeeklyStat = restServiceUrl + "weekly/";
+      var updateMonthlyStat = restServiceUrl + "monthly/";
+      var updateDailyStat = restServiceUrl + "daily/";
+      
+      var numberOfLines = 5;
+      
+      /********** Utils **********/
+      function addZeros(number, length) {        
+        var str = '' + number;
+        while (str.length < length) {
+          str = '0' + str;
+        }
+        return str;     
+      }
+      /********** /Utils **********/
+      
+      function init() {
+        
+        document.getElementById('monthlyStatistic').innerHTML = '__MSG_loading__...';
+        document.getElementById('weeklyStatistic').innerHTML = '__MSG_loading__...';
+        
+        loadWeeklyValidationStat(numberOfLines);
+        loadMonthlyValidationStat(numberOfLines);
+        loadDailyValidationStat(numberOfLines);
+        
+        $("#accordion").accordion({
+          autoHeight: false,
+          navigation: true
+        });   
+        
+      }
+      
+      function addMoreStats() {
+        numberOfLines = numberOfLines + 5;
+        init();
+      }
+      function  resetGadget() {
+        numberOfLines = 5;
+        init();
+      }
+      
+      
+      function resizeGadget() {
+        var totalHeight = $("#localGadgetContainer").height() +50;
+        gadgets.window.adjustHeight(totalHeight);
+      }      
+      
+      
+      function printLine(callType,yearToprint, idToPrint, value) {
+        console.log("-- PRINT LINE : "+ callType +":"+ yearToprint +":"+ idToPrint +":"+ value );
+        var returnValue = "";
+        var actionElementName = 'ACTION-'+ callType +'-'+ yearToprint +'-'+ idToPrint;
+        returnValue = returnValue + '  <div style="float:left; margin-right:10px; ">';
+        returnValue = returnValue + yearToprint +'/'+ addZeros(idToPrint,2) +' : ' + value  +' entries </div>';
+        returnValue = returnValue + '<div style="float:auto;  " id="'+ actionElementName +'" >'       
+        returnValue = returnValue + '  <a href="javascript:updateStatistics(\'POST\',\''+ callType +'\','+ yearToprint +','+ idToPrint ;
+        returnValue = returnValue + ')" >Refresh</a> | ';
+        returnValue = returnValue + '  <a href="javascript:updateStatistics(\'DELETE\',\''+ callType +'\','+ yearToprint +','+ idToPrint ;
+        returnValue = returnValue + ')" >Delete</a>';    
+        returnValue = returnValue + '</div>  ';        
+        return returnValue;
+      }
+      
+      function updateStatistics(action, statType, yearToLoad, idToLoad) {
+        var waitingText = '__MSG_loading__ ....'
+            var elName = statType +'-'+ yearToLoad +'-'+ idToLoad;
+        var urlToCall = null;
+        if (statType == "WEEK") {
+          urlToCall = updateWeeklyStat;
+        }else if (statType == "MONTH") {
+          urlToCall=  updateMonthlyStat;  
+        }else if (statType == "DAY") {
+          urlToCall=  updateDailyStat;
+        }     
+        
+        document.getElementById('ACTION-'+ elName ).innerHTML = waitingText;
+        $.ajax({
+                type: action ,
+                url: urlToCall + yearToLoad +"/"+ idToLoad,
+                success: updateStatisticInfo
+        });           
+      }
+      
+      function updateStatisticInfo( response) {
+        var item = response.data[0];
+        document.getElementById(item.type +'-'+ item.year +'-'+ item.id).innerHTML = printLine(item.type, item.year, item.id, item.value);
+        resizeGadget();
+      }
+      
+      /********* START WEEK  *************/
+      function loadWeeklyValidationStat(numberOfWeeks) {
+        $.getJSON(weeklyStatValidationUrl +"?nb="+numberOfWeeks, printWeeklyValidationStat);
+      }
+      
+      function printWeeklyValidationStat(response) {
+        var resultData = response.data;
+        var html = new Array();
+        
+        for (var i = 0; i < resultData.length; i++)
+        {
+          var item = resultData[i];
+          var value = item.value;
+          
+          html.push('<div class="IconLink" id="'+ item.type +'-'+ item.year +'-'+ item.id +'" >');
+          html.push( printLine(item.type, item.year, item.id, item.value) );
+          html.push('</div>');
+        }        
+        document.getElementById('weeklyStatistic').innerHTML = html.join('');
+        resizeGadget();
+      }         
+
+      /********* END WEEK  *************/      
+      
+      
+      /********* START MONTH  *************/
+      function loadMonthlyValidationStat(numberOfMonths) {
+        $.getJSON(monthlyStatValidationUrl +"?nb="+numberOfMonths, printMonthlyValidationStat);
+      }
+      
+      
+      function printMonthlyValidationStat(response) {
+        var resultData = response.data;
+        console.log(resultData);
+        var html = new Array();
+        for (var i = 0; i < resultData.length; i++)
+        {
+          var item = resultData[i];
+          var elName = item.type +'-'+ item.year +'-'+ item.id;
+          html.push('<div class="IconLink"  id="'+ elName  +'" >');
+          html.push( printLine(item.type, item.year, item.id, item.value) );
+          html.push('</div>');
+        }        
+        document.getElementById('monthlyStatistic').innerHTML = html.join('');
+        resizeGadget();
+        
+      }   
+        /********* END WEEK  *************/
+
+      
+        /********* START DAY  *************/
+        function loadDailyValidationStat(numberOfDays) {
+          console.log("loadDailyValidationStat "+ numberOfDays );
+          $.getJSON(dailyStatValidationUrl +"?nb="+numberOfDays, printDailyValidationStat);
+        }
+
+
+      function printDailyValidationStat(response) {
+        var resultData = response.data;
+        console.log(resultData);
+        var html = new Array();
+        for (var i = 0; i < resultData.length; i++)
+        {
+          var item = resultData[i];
+          var elName = item.type +'-'+ item.year +'-'+ item.id;
+          html.push('<div class="IconLink"  id="'+ elName  +'" >');
+          html.push( printLine(item.type, item.year, item.id, item.value) );
+          html.push('</div>');
+        }        
+        document.getElementById('dailyStatistic').innerHTML = html.join('');
+        resizeGadget();
+        
+      }
+        /********* END DAY  *************/      
+      
+      
+      gadgets.util.registerOnLoadHandler(init);
+      
+    </script>
+        
+    
+    <div id="localGadgetContainer">    
+      <h1>Statistic Validation</h1>
+      
+      <div id="accordion" style="margin-top:2px">
+        
+        
+        <h3><a href="#">Activities by Weeks</a></h3>
+        <div id="weeklyStatisticContainer">
+          <div id="weeklyStatistic">
+            Loading....
+          </div>
+        </div>
+        
+        <h3 id="title2"><a href="#">Activities by Month</a></h3>
+        <div id="monthlyStatisticContainer" >
+          <div id="monthlyStatistic" >
+            Loading....
+          </div>
+        </div>
+        
+        <h3 id="title2"><a href="#">Activities by Day</a></h3>
+        <div id="dailyStatisticContainer" >
+          <div id="dailyStatistic" >
+            Loading....
+          </div>
+        </div>
+
+      </div>  
+      
+      
+      
+      <a href="javascript:init()">Refresh All</a>  |
+      <a href="javascript:addMoreStats()">More</a> |
+      <a href="javascript:resetGadget()">Reset</a>     
+    </div>
+    
+    ]]></Content></Module>
+
+

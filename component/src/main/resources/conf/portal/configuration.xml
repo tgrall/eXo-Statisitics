@@ -28,6 +28,7 @@
    </external-component-plugins>      
 
     <!-- Configuration of the Weekly job for Social Activities -->
+<!--
     <external-component-plugins>
         <target-component>org.exoplatform.services.scheduler.JobSchedulerService</target-component>
         <component-plugin>
@@ -50,8 +51,11 @@
             </init-params>
         </component-plugin>
     </external-component-plugins>
+-->
+
 
     <!-- Configuration of the Monthly job for Social Activities -->
+<!--    
     <external-component-plugins>
         <target-component>org.exoplatform.services.scheduler.JobSchedulerService</target-component>
         <component-plugin>
@@ -74,8 +78,10 @@
             </init-params>
         </component-plugin>
     </external-component-plugins>
+-->
 
     <!-- Configuration of the Monthly job for Social Activities -->
+<!-- 
     <external-component-plugins>
         <target-component>org.exoplatform.services.scheduler.JobSchedulerService</target-component>
         <component-plugin>
@@ -98,8 +104,7 @@
             </init-params>
         </component-plugin>
     </external-component-plugins>
-
- 
+--> 
 
 
     <external-component-plugins>
